@@ -83,9 +83,10 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: rails_kamal_demo_production
-    username: rails_kamal_demo
-    password: <%= ENV["RAILS_KAMAL_DEMO_DATABASE_PASSWORD"] %>
+    url: <%= ENV["MY_APP_DATABASE_URL"] %>
+#    database: rails_kamal_demo_production
+#    username: rails_kamal_demo
+#    password: <%#= ENV["RAILS_KAMAL_DEMO_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production
     database: rails_kamal_demo_production_cache
