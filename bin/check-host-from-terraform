@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'yaml'
+
+# Remember the current directory
+current_dir = Dir.pwd
+
+# Define the relative path to the Terraform directory
+terraform_dir = File.expand_path('../../../terraform-kamal', __FILE__)
+
+# Change the current directory to the Terraform directory
+Dir.chdir(terraform_dir)
+
+# Fetch the Terraform output
+terraform_output = `terraform output -json`
+output = JSON.parse(terraform_output)
+
+# Check if the instance_ip key exists
+if output.key?('instance_ip') && output['instance_ip'].key?('value')
+  instance_ip = output['instance_ip']['value']
+  puts "Found instance IP: #{instance_ip}"
+
+  # Change back to the original directory
+  Dir.chdir(current_dir)
+
+  # Load the deploy.yml file
+  deploy_file_path = File.expand_path('../config/deploy.yml', __dir__)
+  deploy_config = YAML.load_file(deploy_file_path)
+
+  # Check if the IP address in deploy.yml matches the instance IP
+  deploy_ip = deploy_config.dig('servers', 'web')&.first
+  if deploy_ip == instance_ip
+    puts "The IP address in deploy.yml is correct: #{deploy_ip}"
+  else
+    puts "The IP address in deploy.yml is incorrect. Expected: #{instance_ip}, Found: #{deploy_ip}"
+  end
+else
+  puts "Error: 'instance_ip' key not found in Terraform output"
+end
