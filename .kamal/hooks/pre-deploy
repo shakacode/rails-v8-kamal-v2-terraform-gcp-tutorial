@@ -1,0 +1,15 @@
+#!/bin/bash
+echo "✅ Ran Pre-deploy script. Proceeding with deployment."
+
+## Set Rails environment (optional, default is production)
+#export RAILS_ENV=${RAILS_ENV:-production}
+#
+## Run the Rake task
+#echo "Running pre-deploy database checks..."
+#if bundle exec rake db:check_connections; then
+#  echo "✅ Pre-deploy checks passed. Proceeding with deployment."
+#  exit 0
+#else
+#  echo "❌ Pre-deploy checks failed. Aborting deployment."
+#  exit 1
+#fi

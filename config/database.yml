@@ -83,7 +83,9 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    url: <%= Rails.application.credentials.database_url %>
+    database: rails_kamal_demo_production
+    username: rails_user
+    password: <%= Rails.application.credentials.database_password %>
   cache:
     <<: *primary_production
     database: rails_kamal_demo_production_cache
