@@ -2,6 +2,14 @@
 
 echo "🔄 Running post-deploy tasks..."
 
+echo "Running on $(hostname)"
+echo "Environment variables:"
+env
+echo DB_HOST is $DB_HOST
+echo RAILS_MASTER_KEY is $RAILS_MASTER_KEY
+
+docker ps
+
 # Define the list of database roles to process
 roles="primary cache queue cable"
 
@@ -9,16 +17,16 @@ roles="primary cache queue cable"
 for role in $roles; do
   if [ "$role" = "primary" ]; then
     echo "Running db:prepare for the primary database..."
-    if bin/rails db:prepare; then
+    if bin/rails db:migrate; then
       echo "✅ db:prepare completed for the primary database."
     else
       echo "❌ Failed to migrate the primary database. Aborting."
       exit 1
     fi
   else
-    echo "Running db:prepare for the ${role} database..."
-    if RAILS_ENV=production bin/rails db:prepare:${role}; then
-      echo "✅ db:prepare completed for the ${role} database."
+    echo "Running db:migrate for the ${role} database..."
+    if RAILS_ENV=production bin/rails db:migrate:${role}; then
+      echo "✅ db:migrate completed for the ${role} database."
     else
       echo "❌ Failed to migrate the ${role} database. Aborting."
       exit 1
