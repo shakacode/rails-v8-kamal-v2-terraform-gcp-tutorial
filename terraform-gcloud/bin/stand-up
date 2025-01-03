@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+# This script stops the Kamal app and destroys the Terraform infrastructure.
+# It should be run from any directory, as it calculates paths relative to the script's location.
+
+pushd . > /dev/null
+
+# Get the directory of the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo $SCRIPT_DIR is the script directory
+
+# Destroy the Terraform infrastructure
+echo "Creating the Terraform infrastructure..."
+cd "$SCRIPT_DIR/.."
+pwd
+
+echo "Creating the Terraform infrastructure..."
+terraform apply -auto-approve
+
+echo "Updating the deploy.yml file with the new IP address..."
+cd "$SCRIPT_DIR"
+pwd
+./update_deploy_yml.rb
+
+echo "Do not forget to configure your DNS settings to point to the new IP address."
+echo "per the proxy:host: value in the deploy.yml file."
+
+echo "Once you have updated your DNS settings, run kamal setup."
+echo "Ensure you see no errors."
+
+popd > /dev/null

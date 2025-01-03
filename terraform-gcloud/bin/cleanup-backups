@@ -1,0 +1,4 @@
+#!/bin/bash
+# cleanup-backups.sh
+find ../terraform-state -name "terraform.tfstate.*.backup" -type f -delete
+echo "Old backup files removed from terraform-state."

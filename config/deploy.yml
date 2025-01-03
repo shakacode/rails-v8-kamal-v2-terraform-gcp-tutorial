@@ -11,10 +11,10 @@ image: shakacodedemo/rails_kamal_demo
 # Deploy to these servers.
 servers:
   web: # Next value is set by Terraform script "stand-up" in sibling repo
-    - 34.55.160.122
+    - 35.225.244.253
 #  job:
 #     hosts:
-#       - 34.55.160.122
+#       - 35.225.244.253
 #     cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
