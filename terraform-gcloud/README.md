@@ -14,6 +14,7 @@ Suggested Setup for Simplicity:
 	•	Place all your Terraform files in a subdirectory within the Rails app, such as terraform/.
 	•	Example structure:
 
+```
 my_rails_app/
 ├── app/
 ├── config/
@@ -25,7 +26,7 @@ my_rails_app/
 │   └── .terraform.lock.hcl
 ├── Gemfile
 └── ...
-
+```
 
 	2.	Isolate State Files:
 	•	Ensure that your terraform state files (e.g., terraform.tfstate) are either excluded from version control (via .gitignore) or stored remotely (e.g., in an S3 bucket for AWS setups).
