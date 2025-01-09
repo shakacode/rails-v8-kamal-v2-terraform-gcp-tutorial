@@ -74,7 +74,7 @@ resource "google_compute_instance" "rails_app" {
     systemctl enable docker
     systemctl start docker
 
-    # Download and set up the Cloud SQL Proxy
+    # Download and set up the Cloud SQL Proxy so database is on localhost (of host machine), port 5432
     wget -q https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64 -O /usr/local/bin/cloud_sql_proxy
     chmod +x /usr/local/bin/cloud_sql_proxy
 

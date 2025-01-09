@@ -24,6 +24,9 @@ Why use Rails 8 with Terraform, Google Cloud, and Kamal v2?
    ```bash
    bundle install
    ```
+3. Edit the `terraform-gcloud/variables.tf` file with your project details. 
+4. Edit the `config/deploy.yml` file with your domain name (currently set to `kamal.shakacode.com`)
+5. 
 
 
 # Secrets

@@ -1,34 +1,131 @@
-#!/bin/bash
+#!/usr/bin/env ruby
 
-set -e
+require 'yaml'
+require 'json'
+require 'open3'
 
-# This script stops the Kamal app and destroys the Terraform infrastructure.
-# It should be run from any directory, as it calculates paths relative to the script's location.
+class DeploymentManager
+  DEPLOY_TIMEOUT_WITH_SCHEMA_CHANGE = 120
 
-pushd . > /dev/null
+  def initialize
+    @root_dir = File.expand_path('../../..', __FILE__)
+    @terraform_dir = File.join(@root_dir, 'terraform-gcloud')
+    @deploy_yml_path = File.join(@root_dir, 'config', 'deploy.yml')
 
-# Get the directory of the script
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    load_config
+  end
 
-echo $SCRIPT_DIR is the script directory
+  def deploy
+    puts "\n=== Starting Deployment ==="
+    apply_terraform
+    update_config
+    verify_dns
+    run_kamal
+    puts "\n=== Deployment Complete ==="
+  end
 
-# Destroy the Terraform infrastructure
-echo "Creating the Terraform infrastructure..."
-cd "$SCRIPT_DIR/.."
-pwd
+  private
 
-echo "Creating the Terraform infrastructure..."
-terraform apply -auto-approve
+  def load_config
+    raise "❌ deploy.yml not found at #{@deploy_yml_path}" unless File.exist?(@deploy_yml_path)
+    @yaml_content = File.read(@deploy_yml_path)
+    @config = YAML.safe_load(@yaml_content, permitted_classes: [Date], aliases: true)
+  rescue => e
+    abort "❌ Failed to load configuration: #{e.message}"
+  end
 
-echo "Updating the deploy.yml file with the new IP address..."
-cd "$SCRIPT_DIR"
-pwd
-./update_deploy_yml.rb
+  def apply_terraform
+    log_step "Applying Terraform Infrastructure"
+    Dir.chdir(@terraform_dir) do
+      system("terraform apply -auto-approve") or abort("❌ Terraform apply failed!")
+    end
 
-echo "Do not forget to configure your DNS settings to point to the new IP address."
-echo "per the proxy:host: value in the deploy.yml file."
+    terraform_output = Dir.chdir(@terraform_dir) { JSON.parse(`terraform output -json`) }
+    @new_ip = terraform_output.dig('instance_ip', 'value') or abort("❌ Missing instance_ip in Terraform output")
+    puts "✅ New IP acquired: #{@new_ip}"
+  end
 
-echo "Once you have updated your DNS settings, run kamal setup."
-echo "Ensure you see no errors."
+  def update_config
+    log_step "Updating Configuration"
+    old_ip = @config.dig('servers', 'web')[0]
+    @old_timeout = @config['deploy_timeout']
+    puts "Old timeout was set to #{@old_timeout} seconds"
 
-popd > /dev/null
+    update_ip_in_config(old_ip)
+    update_timeout_in_config
+
+    File.write(@deploy_yml_path, @yaml_content)
+    @config = YAML.safe_load(@yaml_content, permitted_classes: [Date], aliases: true)
+
+    puts "✅ Updated deploy.yml with new IP and timeout"
+    puts "✅ Timeout is now set to #{@config['deploy_timeout']} seconds"
+  end
+
+  def update_ip_in_config(old_ip)
+    @yaml_content.gsub!(old_ip, @new_ip)
+  end
+
+  def update_timeout_in_config
+    if @yaml_content.match?(/deploy_timeout:\s*\d+\s*($|#)/)
+      @yaml_content.gsub!(/deploy_timeout:\s*\d+\s*($|#)/, "deploy_timeout: #{DEPLOY_TIMEOUT_WITH_SCHEMA_CHANGE}\\1")
+    else
+      @yaml_content << "\ndeploy_timeout: #{DEPLOY_TIMEOUT_WITH_SCHEMA_CHANGE}\n"
+    end
+  end
+
+def verify_dns
+  log_step "Verifying DNS Configuration"
+  @host = @config.dig('proxy', 'host')
+
+  # Initial DNS check before asking for update
+  resolved_ip = resolve_dns
+  if resolved_ip == @new_ip
+    puts "\n✅ DNS verification successful! #{@host} → #{@new_ip}"
+    return
+  end
+
+  puts "Update your DNS A record to point to the new IP address: #{@new_ip}"
+  loop do
+    print "Press return to check DNS (or Ctrl-C to exit): "
+    gets.strip
+
+    print "\rChecking DNS..."
+    resolved_ip = resolve_dns
+
+    if resolved_ip == @new_ip
+      puts "\n✅ DNS verification successful! #{@host} → #{@new_ip}"
+      return
+    end
+
+    puts "\n⏳ Current DNS: #{resolved_ip || 'not resolved'} (Expected: #{@new_ip})"
+  end
+end
+
+  def resolve_dns
+    output, = Open3.capture2("dig +short #{@host}")
+    output.lines.find { |line| line.match?(/^\d{1,3}(\.\d{1,3}){3}$/) }&.strip
+  end
+
+  def run_kamal
+    log_step "Running Kamal Setup"
+    Dir.chdir(@root_dir) do
+      system("kamal setup") or abort("❌ Kamal setup failed!")
+      puts "\n=== Kamal Details ==="
+      system("kamal details")
+    end
+
+    restore_original_timeout
+  end
+
+  def restore_original_timeout
+    @yaml_content.gsub!(/deploy_timeout:\s*\d+\s*($|#)/, "deploy_timeout: #{@old_timeout}\\1")
+    File.write(@deploy_yml_path, @yaml_content)
+    puts "✅ Restored timeout configuration to #{@old_timeout} seconds"
+  end
+
+  def log_step(message)
+    puts "\n=== #{message} ==="
+  end
+end
+
+DeploymentManager.new.deploy

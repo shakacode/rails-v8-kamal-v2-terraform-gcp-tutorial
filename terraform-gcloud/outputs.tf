@@ -33,3 +33,8 @@ output "db_cable_name" {
   description = "The name of the cable production database"
   value       = google_sql_database.rails_database_cable.name
 }
+
+output "project_id" {
+  value       = var.project_id
+  description = "The project ID"
+}
