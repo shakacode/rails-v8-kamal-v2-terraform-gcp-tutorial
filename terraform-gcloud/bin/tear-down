@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -e
+
+# This script stops the Kamal app and destroys the Terraform infrastructure.
+# It should be run from any directory, as it calculates paths relative to the script's location.
+
+pushd . > /dev/null
+
+# Get the directory of the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+echo $SCRIPT_DIR is the script directory
+
+echo "Stopping the Kamal app..."
+cd "$SCRIPT_DIR/../.."
+./bin/kamal app stop
+
+# Destroy the Terraform infrastructure
+echo "Destroying the Terraform infrastructure..."
+cd "$SCRIPT_DIR/.."
+
+echo "Destroying the Terraform infrastructure..."
+terraform destroy -auto-approve
+
+echo "Completed destroying the Terraform infrastructure..."
+
+popd > /dev/null

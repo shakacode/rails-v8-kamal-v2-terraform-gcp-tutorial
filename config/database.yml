@@ -60,32 +60,15 @@ test:
   <<: *default
   database: rails_kamal_demo_test
 
-# As with config/credentials.yml, you never want to store sensitive information,
-# like your database password, in your source code. If your source code is
-# ever seen by anyone, they now have access to your database.
-#
-# Instead, provide the password or a full connection URL as an environment
-# variable when you boot the app. For example:
-#
-#   DATABASE_URL="postgres://myuser:mypass@localhost/somedatabase"
-#
-# If the connection URL is provided in the special DATABASE_URL environment
-# variable, Rails will automatically merge its configuration values on top of
-# the values provided in this file. Alternatively, you can specify a connection
-# URL environment variable explicitly:
-#
-#   production:
-#     url: <%= ENV["MY_APP_DATABASE_URL"] %>
-#
 # Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
 # for a full overview on how database connection configuration can be specified.
-#
+# The values here need to correspond to the values in the `terraform-gcloud/main.tf` file.
+# The password comes from ENV variable DB_PASSWORD.
 production:
   primary: &primary_production
     <<: *default
     database: rails_kamal_demo_production
-    username: rails_kamal_demo
-    password: <%= ENV["RAILS_KAMAL_DEMO_DATABASE_PASSWORD"] %>
+    username: rails_user
   cache:
     <<: *primary_production
     database: rails_kamal_demo_production_cache
