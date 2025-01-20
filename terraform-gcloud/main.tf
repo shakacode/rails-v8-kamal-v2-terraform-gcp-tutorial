@@ -139,14 +139,18 @@ resource "google_sql_database_instance" "rails_db_instance" {
 }
 
 ########################################
-#   Database User
+#   Database Password and User
 ########################################
-resource "google_sql_user" "rails_db_user" {
-  name     = "rails_user"
-  password = "supersecurepassword"
-  instance = google_sql_database_instance.rails_db_instance.name
+data "google_secret_manager_secret_version" "db_password" {
+  secret  = "DB_PASSWORD"
+  project = var.project_id
 }
 
+resource "google_sql_user" "rails_db_user" {
+  name     = "rails_user"
+  password = data.google_secret_manager_secret_version.db_password.secret_data
+  instance = google_sql_database_instance.rails_db_instance.name
+}
 # Primary Database
 resource "google_sql_database" "rails_database_primary" {
   name     = "rails_kamal_demo_production"

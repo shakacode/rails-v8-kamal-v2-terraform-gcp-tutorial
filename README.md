@@ -20,6 +20,12 @@ Why use Rails 8 with Terraform, Google Cloud, and Kamal v2?
 
 ## Setup
 1. Clone this repository.
+2. Create the Master Key: Run the following command to generate the development and test `master.key` and save it in the correct location:
+  ```bash
+  echo "94cd5f24badf3102a4c6a09eb4a4a516" > config/master.key
+  ```
+  Or just make a brand new one for development and test with `rails credentials:edit`.
+
 2. Install the required gems:
    ```bash
    bundle install
@@ -29,11 +35,25 @@ Why use Rails 8 with Terraform, Google Cloud, and Kamal v2?
 5. 
 
 
-# Secrets
+# Secrets and Credentials
+Note: 
+1. I originally created the example to work with 1Password. However, given that a GCP account is required, I decided to use the GCP Secret Manager.
+2. To demonstrate best practices for handling secrets, we will NOT use rails credentials for production secrets. Instead, we will use the Google Cloud Secret Manager. Rails credentials are great for non-production environments.
 
+## Google Cloud Secret Manager
+
+1. Open the [Google Cloud Secret Manager](https://console.cloud.google.com/security/secret-manager).
+2. Ensure that you have the correct project selected.
+3. Click on "Create Secret" to add a new secret.
+4. Add the following 3 secrets:
+   - `KAMAL_REGISTRY_PASSWORD`: The password for the Docker registry.
+   - `DB_PASSWORD`: The password for the database, as you like. 
+   - `SECRET_KEY_BASE`: Generate with `rails secret`. 
 
 # Database Setup and Migrations
+The database is automatically created and migrated when the Rails app is deployed. This is done via the [bin/docker-entrypoint.sh](bin/docker-entrypoint.sh) script which calls `rails db:prepare`.
 
+Note, the initial deployment will fail because the database schema needs to be created. This is expected. Just run `bundle exec kamal deploy` again after the initial setup.
 
 # Deployment
 
@@ -51,8 +71,6 @@ Why use Rails 8 with Terraform, Google Cloud, and Kamal v2?
    ```bash
    bundle exec kamal deploy
    ```
- 
-
 
 4. Visit your domain name in the browser to see your Rails app running on Google Cloud!  
 
