@@ -14,11 +14,11 @@ Check out [ShakaCode's Infrastructure Optimization Services](https://www.shakaco
 ### Other Resources 
 * [Click to join **React + Rails Slack** to chat with Justin](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
-## Kamal Basics 
+## Kamal Basics
 
-In order to use Kamal, you should try to understand what's going on from first principles.
+In order to use [Kamal](https://kamal-deploy.org/), you should try to understand what's going on from first principles.
 
-Kamal is a CLI that uses configuration files to orchestrate commands for Docker deployment on remote machines.
+Kamal is a CLI that uses configuration files to orchestrate commands for Docker deployment on remote machines. See the [Kamal documentation](https://kamal-deploy.org/docs/installation/) for installation and usage details.
 
 Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
 1. Kamal gives lots of output to the command line on what's running
@@ -36,7 +36,7 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
 ## Requirements
 
 1. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) with a gcloud account.
-2. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli).
+2. [Terraform](https://developer.hashicorp.com/terraform/install).
 3. Some domain name where you can add an A record to point to your server's IP address.
 3. Docker
 4. Ruby 3.4.3
@@ -77,8 +77,10 @@ Note:
 3. Click on "Create Secret" to add a new secret.
 4. Add the following 3 secrets:
    - `KAMAL_REGISTRY_PASSWORD`: The password for the Docker registry.
-   - `DB_PASSWORD`: The password for the database, as you like. 
-   - `SECRET_KEY_BASE`: Generate with `rails secret`. 
+   - `DB_PASSWORD`: The password for the database, as you like.
+   - `SECRET_KEY_BASE`: Generate with `rails secret`.
+
+![GCP Secret Manager](docs/images/gcp-secret-manager.png)
 
 ### `deploy.yml`
 Note that the `deploy.yml` already has:
@@ -142,7 +144,7 @@ This script has some useful features:
 
 1. It creates the infrastructure on Google Cloud using Terraform.
 2. It updates the deploy.yml config file to reflect the IP address of the server and makes a longer deployment timeout.
-3. You get a chance to add an A record to your domain name pointing to the IP address.
+3. You get a chance to add an A record to your domain name pointing to the IP address. **You manage DNS with your own domain registrar** (e.g., GoDaddy, Namecheap, Cloudflare, etc.) — not through Google Cloud. Log in to your registrar's DNS management panel and add or update an `A` record pointing your chosen subdomain (e.g., `gcp.yourdomain.com`) to the IP address shown in the output.
    ```
    Outputs:
    db_primary_name = "rails_kamal_demo_production"
@@ -179,7 +181,7 @@ To get a sense of the basics of Terraform and Kamal v2, follow these steps.
 ###  Terraform Setup
 First, ensure that you can run `terraform` commands to create the infrastructure on Google Cloud.
 
-1. Install the Google Cloud SDK and Terraform.
+1. Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (see [docs/prerequisites.md](docs/prerequisites.md) for platform-specific instructions) and [Terraform](https://developer.hashicorp.com/terraform/install) (via [Homebrew](https://brew.sh/): `brew tap hashicorp/tap && brew install hashicorp/tap/terraform`, or download from the [Terraform downloads page](https://developer.hashicorp.com/terraform/install)).
 2. Run terraform commands from `cd terraform-gcloud`.
 2. Update the `terraform-gcloud/variables.tf` file with your project details as described above.
 3. Run `terraform init` in the `terraform-gcloud` directory to initialize the Terraform configuration.
