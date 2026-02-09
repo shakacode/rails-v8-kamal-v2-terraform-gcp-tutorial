@@ -11,10 +11,10 @@ image: shakacodedemo/rails_kamal_demo
 # Deploy to these servers.
 servers:
   web: # Next value is set by Terraform script "stand-up" in sibling repo
-    - 34.59.165.111
+    - 34.56.255.48
 #  job:
 #     hosts:
-#       - 34.59.165.111
+#       - 34.56.255.48
 #     cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
@@ -86,8 +86,9 @@ asset_path: /rails/public/assets
 builder:
   arch: amd64
 
-  # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
-  # remote: ssh://docker@docker-builder-server
+  # Build image via remote server (useful for faster amd64 builds on Apple Silicon Macs)
+  # Uncomment and set to an amd64 machine with Docker to avoid slow QEMU emulation.
+  # remote: ssh://your-user@your-amd64-server
   #
   # # Pass arguments and secrets to the Docker build process
   # args:
@@ -126,4 +127,4 @@ ssh:
 
 # Configure rolling deploys by setting a wait time between batches of restarts.
 # 30 is the default. First deploy will need a longer time to create the database.
-deploy_timeout: 30
+deploy_timeout: 120
