@@ -52,8 +52,12 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
    ```bash
    bundle install
    ```
-4. Edit the `terraform-gcloud/variables.tf` file with your project details.  You need to create a Google Cloud "project" for this demo.
-5. Edit the `config/deploy.yml` file:
+4. Start Docker Desktop, then start the database for local development:
+   ```bash
+   docker compose up db -d
+   ```
+5. Edit the `terraform-gcloud/variables.tf` file with your project details.  You need to create a Google Cloud "project" for this demo.
+6. Edit the `config/deploy.yml` file:
    1. Set the `proxy.host` domain name (currently set to `gcp.kamaltutorial.com`)
    2. Change the `registry.username`
    3. Change the `ssh.user` to your username.
@@ -191,6 +195,8 @@ First, ensure that you can run `terraform` commands to create the infrastructure
 
 ### Kamal v2 Deployment
 Next, ensure that you can deploy the Rails app using Kamal v2.
+
+> **Note for Apple Silicon (M1/M2/M3/M4) users:** The Docker image is built for `linux/amd64`, so building locally on ARM Macs uses QEMU emulation, which can take 20-30 minutes even for this small app. Linux x86_64 users will see much faster builds (3-5 minutes). To speed up builds on ARM Macs, you can use a remote amd64 builder by setting the `remote` option in the `builder` section of `config/deploy.yml` and pointing it to an amd64 machine with Docker installed. See the [Kamal docs on remote builds](https://kamal-deploy.org/docs/configuration/builders/) for details.
 
 1. Run `./bin/kamal setup` to set up the Kamal v2 configuration. Notice the error that the health checks failed. This is expected because the database needs to be created and migrated.
 2. Unless you change the `deploy.yml` file to have a longer `deploy_timeout`, you'll need to run `./bin/kamal deploy` a second time, because the database needs to be created and migrated. The `stand-up` script does this for you.
