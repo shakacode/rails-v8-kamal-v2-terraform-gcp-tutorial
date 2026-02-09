@@ -39,7 +39,7 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
 2. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli).
 3. Some domain name where you can add an A record to point to your server's IP address.
 3. Docker
-4. Ruby 3.3.4
+4. Ruby 3.4.3
 
 ## Setup
 1. Clone this repository.
