@@ -1,14 +1,14 @@
-require 'yaml'
-require 'json'
-require 'open3'
+require "yaml"
+require "json"
+require "open3"
 
 class DeploymentManager
   DEPLOY_TIMEOUT_WITH_SCHEMA_CHANGE = 120
 
   def initialize
-    @root_dir = File.expand_path('../..', __FILE__)
-    @terraform_dir = File.join(@root_dir, 'terraform-gcloud')
-    @deploy_yml_path = File.join(@root_dir, 'config', 'deploy.yml')
+    @root_dir = File.expand_path("../..", __FILE__)
+    @terraform_dir = File.join(@root_dir, "terraform-gcloud")
+    @deploy_yml_path = File.join(@root_dir, "config", "deploy.yml")
 
     load_config
   end
@@ -24,7 +24,7 @@ class DeploymentManager
   end
 
   def deployed_ip_matches_configured_ip?
-    configured_ip = @config.dig('servers', 'web')[0]
+    configured_ip = @config.dig("servers", "web")[0]
     if deployed_ip == configured_ip
       puts "✅ Deployed IP matches the configured IP: #{configured_ip}"
       true
@@ -43,7 +43,7 @@ class DeploymentManager
     raise "❌ deploy.yml not found at #{@deploy_yml_path}" unless File.exist?(@deploy_yml_path)
     @yaml_content = File.read(@deploy_yml_path)
     @config = YAML.safe_load(@yaml_content, permitted_classes: [ Date ], aliases: true)
-    @host = @config.dig('proxy', 'host')
+    @host = @config.dig("proxy", "host")
   rescue => e
     abort "❌ Failed to load configuration: #{e.message}"
   end
@@ -56,7 +56,7 @@ class DeploymentManager
   def deployed_ip
     @deployed_ip ||= begin
                        terraform_output = Dir.chdir(@terraform_dir) { JSON.parse(`terraform output -json`) }
-                       deployed_ip = terraform_output.dig('instance_ip', 'value') or abort("❌ Missing instance_ip in Terraform output")
+                       deployed_ip = terraform_output.dig("instance_ip", "value") or abort("❌ Missing instance_ip in Terraform output")
                        puts "✅ Deployed IP acquired: #{deployed_ip}"
                        deployed_ip
                      end
@@ -64,8 +64,8 @@ class DeploymentManager
 
   def update_config
     log_step "Updating Configuration"
-    old_ip = @config.dig('servers', 'web')[0]
-    @old_timeout = @config['deploy_timeout']
+    old_ip = @config.dig("servers", "web")[0]
+    @old_timeout = @config["deploy_timeout"]
     puts "Old timeout was set to #{@old_timeout} seconds"
 
     update_ip_in_config(old_ip, deployed_ip)
@@ -99,8 +99,8 @@ class DeploymentManager
       return
     end
 
-    subdomain = @host.split('.').first
-    domain = @host.split('.').drop(1).join('.')
+    subdomain = @host.split(".").first
+    domain = @host.split(".").drop(1).join(".")
 
     puts "Edit DNS for `#{domain}`: Update or add a DNS Type `A` record, Name: `#{subdomain}`, Value: `#{deployed_ip}`"
 
