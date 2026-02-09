@@ -58,6 +58,12 @@ FROM base
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
+# Deployment metadata passed via Kamal builder args
+ARG GIT_REVISION
+ARG BUILD_TIME
+ENV GIT_REVISION=${GIT_REVISION} \
+    BUILD_TIME=${BUILD_TIME}
+
 # Run and own only the runtime files as a non-root user for security
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \

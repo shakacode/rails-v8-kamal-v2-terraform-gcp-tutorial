@@ -85,13 +85,14 @@ asset_path: /rails/public/assets
 # Configure the image builder.
 builder:
   arch: amd64
+  args:
+    GIT_REVISION: "<%= `git rev-parse HEAD`.strip %>"
+    BUILD_TIME: "<%= Time.now.utc.iso8601 %>"
 
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
-  # # Pass arguments and secrets to the Docker build process
-  # args:
-  #   RUBY_VERSION: ruby-3.3.4
+  # # Pass additional arguments and secrets to the Docker build process
   # secrets:
   #   - GITHUB_TOKEN
   #   - RAILS_MASTER_KEY
