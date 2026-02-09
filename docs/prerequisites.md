@@ -2,6 +2,25 @@
 
 ## GCP Account
 
+You need a Google Cloud Platform (GCP) account to deploy this application. If you don't have one:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) and sign up for an account. Google offers a [free trial](https://cloud.google.com/free) with $300 in credits.
+2. Create a new project for this tutorial (e.g., `kamal-demo`).
+3. Enable billing for the project.
+4. Install the [Google Cloud CLI (gcloud)](https://cloud.google.com/sdk/docs/install):
+   - **macOS**: `brew install --cask google-cloud-sdk` (via [Homebrew](https://brew.sh/)) or download the [macOS installer](https://cloud.google.com/sdk/docs/install#mac)
+   - **Linux**: See the [Linux installation guide](https://cloud.google.com/sdk/docs/install#linux)
+   - **Windows**: Download the [Windows installer](https://cloud.google.com/sdk/docs/install#windows)
+
+   After installation, authenticate and set your project:
+   ```bash
+   gcloud auth login
+   gcloud config set project YOUR_PROJECT_ID
+   ```
+5. Enable the required APIs:
+   ```bash
+   gcloud services enable compute.googleapis.com sqladmin.googleapis.com secretmanager.googleapis.com
+   ```
 
 ## SSH Access for GCP
 
