@@ -1,9 +1,3 @@
-terraform {
-  backend "local" {
-    path = "./terraform-state/terraform.tfstate"
-  }
-}
-
 ########################################
 #   Provider Configuration
 ########################################
@@ -45,7 +39,7 @@ resource "google_compute_instance" "rails_app" {
 
   boot_disk {
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = "debian-cloud/debian-12"
     }
   }
 
@@ -75,7 +69,7 @@ resource "google_compute_instance" "rails_app" {
     systemctl start docker
 
     # Download and set up the Cloud SQL Proxy so database is on localhost (of host machine), port 5432
-    wget -q https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.8.0/cloud-sql-proxy.linux.amd64 -O /usr/local/bin/cloud_sql_proxy
+    wget -q https://storage.googleapis.com/cloud-sql-connectors/cloud-sql-proxy/v2.21.0/cloud-sql-proxy.linux.amd64 -O /usr/local/bin/cloud_sql_proxy
     chmod +x /usr/local/bin/cloud_sql_proxy
 
     # Stop any conflicting processes on port 5432
@@ -121,16 +115,16 @@ resource "google_compute_instance" "rails_app" {
 #   Cloud SQL Instance + Databases
 ########################################
 resource "google_sql_database_instance" "rails_db_instance" {
-  name                 = "rails-db-instance"
-  database_version     = "POSTGRES_16"
-  region               = "us-central1"
-  deletion_protection  = false
+  name                = "rails-db-instance"
+  database_version    = "POSTGRES_16"
+  region              = "us-central1"
+  deletion_protection = false
 
   settings {
     tier              = "db-f1-micro" # Smallest tier for cost-effectiveness
     edition           = "ENTERPRISE"
     availability_type = "ZONAL" # Single-zone for reduced cost
-    disk_autoresize = false # Avoid unnecessary storage scaling
+    disk_autoresize   = false   # Avoid unnecessary storage scaling
     backup_configuration {
       enabled                        = false # Disable automatic backups to reduce costs
       point_in_time_recovery_enabled = false # Disable PITR for experimentation
@@ -153,29 +147,29 @@ resource "google_sql_user" "rails_db_user" {
 }
 # Primary Database
 resource "google_sql_database" "rails_database_primary" {
-  name     = "rails_kamal_demo_production"
-  instance = google_sql_database_instance.rails_db_instance.name
+  name       = "rails_kamal_demo_production"
+  instance   = google_sql_database_instance.rails_db_instance.name
   depends_on = [google_sql_user.rails_db_user]
 }
 
 # Cache Database
 resource "google_sql_database" "rails_database_cache" {
-  name     = "rails_kamal_demo_production_cache"
-  instance = google_sql_database_instance.rails_db_instance.name
+  name       = "rails_kamal_demo_production_cache"
+  instance   = google_sql_database_instance.rails_db_instance.name
   depends_on = [google_sql_user.rails_db_user]
 }
 
 # Queue Database
 resource "google_sql_database" "rails_database_queue" {
-  name     = "rails_kamal_demo_production_queue"
-  instance = google_sql_database_instance.rails_db_instance.name
+  name       = "rails_kamal_demo_production_queue"
+  instance   = google_sql_database_instance.rails_db_instance.name
   depends_on = [google_sql_user.rails_db_user]
 }
 
 # Cable Database
 resource "google_sql_database" "rails_database_cable" {
-  name     = "rails_kamal_demo_production_cable"
-  instance = google_sql_database_instance.rails_db_instance.name
+  name       = "rails_kamal_demo_production_cable"
+  instance   = google_sql_database_instance.rails_db_instance.name
   depends_on = [google_sql_user.rails_db_user]
 }
 
