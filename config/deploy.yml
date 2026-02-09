@@ -11,10 +11,10 @@ image: shakacodedemo/rails_kamal_demo
 # Deploy to these servers.
 servers:
   web: # Next value is set by Terraform script "stand-up" in sibling repo
-    - 34.59.165.111
+    - 34.56.255.48
 #  job:
 #     hosts:
-#       - 34.59.165.111
+#       - 34.56.255.48
 #     cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
@@ -127,4 +127,4 @@ ssh:
 
 # Configure rolling deploys by setting a wait time between batches of restarts.
 # 30 is the default. First deploy will need a longer time to create the database.
-deploy_timeout: 30
+deploy_timeout: 120
