@@ -119,7 +119,7 @@ class DeploymentManager
   end
 
   def resolve_dns
-    output, = Open3.capture2("dig +short #{@host}")
+    output, = Open3.capture2("dig", "+short", @host)
     output.lines.find { |line| line.match?(/^\d{1,3}(\.\d{1,3}){3}$/) }&.strip
   rescue => e
     puts "\n❌ Error during DNS verification: #{e.message}"
