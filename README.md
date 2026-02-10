@@ -152,7 +152,7 @@ The `terraform-gcloud/bin/` directory contains helper scripts for managing infra
 | Script | Language | Purpose |
 |--------|----------|---------|
 | `stand-up` | Ruby | Full automated deployment: terraform apply, update deploy.yml IP, DNS verification, kamal setup |
-| `tear-down` | Bash | Graceful teardown: kamal app stop, then terraform destroy |
+| `tear-down` | Bash | Graceful teardown: kamal app stop, then terraform destroy (preserves static IP by default; use `--release-ip` to release it) |
 | `cleanup-backups` | Bash | Remove old Terraform state backup files |
 
 The `stand-up` script uses the `DeploymentManager` class in `lib/deployment_manager.rb`, which orchestrates the full deployment flow and provides colored output with timing for each step.
@@ -193,7 +193,14 @@ When you're done, run `terraform-gcloud/bin/tear-down` to destroy the infrastruc
 
 The `tear-down` script:
 1. Runs `kamal app stop` to stop the Rails app. This is required before destroying infrastructure — Terraform cannot destroy the Cloud SQL database while active connections exist.
-2. Runs `terraform destroy` to remove all GCP resources (Compute Engine, Cloud SQL, firewall rules, service accounts).
+2. Preserves the static IP address so your DNS and `deploy.yml` remain stable across destroy/apply cycles.
+3. Runs `terraform destroy` to remove all other GCP resources (Compute Engine, Cloud SQL, firewall rules, service accounts).
+
+**Static IP behavior:** By default, the static IP is kept in GCP so the next `stand-up` reuses the same IP — no DNS update or `deploy.yml` change needed. A reserved IP costs ~$0.01/hr (~$7/mo) while not attached to a running VM. When you're truly done with the tutorial, release the IP too:
+
+```bash
+terraform-gcloud/bin/tear-down --release-ip
+```
 
 ## Step by Step
 To get a sense of the basics of Terraform and Kamal v2, follow these steps manually instead of using the automated scripts. This helps you understand what each command does and see the output from each step.

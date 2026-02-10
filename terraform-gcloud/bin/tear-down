@@ -3,6 +3,9 @@
 set -e
 
 # This script stops the Kamal app and destroys the Terraform infrastructure.
+# By default, the static IP is preserved so DNS and deploy.yml stay stable
+# across destroy/apply cycles. Use --release-ip to also release the IP.
+#
 # It should be run from any directory, as it calculates paths relative to the script's location.
 
 pushd . > /dev/null
@@ -10,15 +13,28 @@ pushd . > /dev/null
 # Get the directory of the script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo $SCRIPT_DIR is the script directory
+RELEASE_IP=false
+for arg in "$@"; do
+  case $arg in
+    --release-ip)
+      RELEASE_IP=true
+      ;;
+  esac
+done
+
+echo "$SCRIPT_DIR is the script directory"
 
 echo "Stopping the Kamal app..."
 cd "$SCRIPT_DIR/../.."
 ./bin/kamal app stop
 
 # Destroy the Terraform infrastructure
-echo "Destroying the Terraform infrastructure..."
 cd "$SCRIPT_DIR/.."
+
+if [ "$RELEASE_IP" = false ]; then
+  echo "Preserving static IP for next stand-up (use --release-ip to release it)..."
+  terraform state rm google_compute_address.rails_app_ip 2>/dev/null || true
+fi
 
 echo "Destroying the Terraform infrastructure..."
 terraform destroy -auto-approve
