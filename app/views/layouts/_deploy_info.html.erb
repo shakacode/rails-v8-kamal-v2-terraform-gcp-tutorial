@@ -1,10 +1,10 @@
 <% if DeployInfo.available? %>
   <footer class="fixed bottom-0 left-0 right-0 py-2 px-4 text-center text-xs text-gray-400">
     <span>rev <%= DeployInfo.git_revision_short %></span>
-    <% if DeployInfo.build_time %>
+    <% if (build_time = DeployInfo.build_time) %>
       <span class="mx-1">&middot;</span>
-      <span title="<%= DeployInfo.build_time.iso8601 %>">
-        deployed <%= time_ago_in_words(DeployInfo.build_time) %> ago
+      <span title="<%= build_time.iso8601 %>">
+        deployed <%= time_ago_in_words(build_time) %> ago
       </span>
     <% end %>
   </footer>

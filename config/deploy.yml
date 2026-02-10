@@ -1,3 +1,6 @@
+# The server IP in this file is updated automatically by the "stand-up" script.
+# See terraform-gcloud/bin/stand-up for details.
+
 # Name of your application. Used to uniquely configure containers.
 service: rails_kamal_demo
 
@@ -7,7 +10,7 @@ image: shakacodedemo/rails_kamal_demo
 # Deploy to these servers.
 servers:
   web: # Next value is set by Terraform script "stand-up" in sibling repo
-    - 34.59.165.111
+    - 35.222.208.101
 #  job:
 #     hosts:
 #       - 34.59.165.111
