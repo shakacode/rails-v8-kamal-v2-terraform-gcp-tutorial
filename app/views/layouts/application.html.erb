@@ -24,8 +24,9 @@
   </head>
 
   <body>
-    <main class="container mx-auto mt-28 px-5 flex">
+    <main class="container mx-auto mt-28 px-5 pb-10 flex">
       <%= yield %>
     </main>
+    <%= render "layouts/deploy_info" %>
   </body>
 </html>

@@ -1,0 +1,11 @@
+<% if DeployInfo.available? %>
+  <footer class="fixed bottom-0 left-0 right-0 py-2 px-4 text-center text-xs text-gray-400">
+    <span><%= link_to "rev #{DeployInfo.git_revision_short}", "https://github.com/shakacode/rails-v8-kamal-v2-terraform-gcp-tutorial/commit/#{DeployInfo.git_revision}", target: "_blank", class: "hover:text-gray-200 underline" %></span>
+    <% if (build_time = DeployInfo.build_time) %>
+      <span class="mx-1">&middot;</span>
+      <span title="<%= build_time.iso8601 %>">
+        deployed <%= time_ago_in_words(build_time) %> ago
+      </span>
+    <% end %>
+  </footer>
+<% end %>

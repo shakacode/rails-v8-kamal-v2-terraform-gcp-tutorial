@@ -1,6 +1,5 @@
-# This deploy.yml file is configured to work with the kamal_tf script.
-# Please use the kamal_tf script to run kamal commands with dynamic IP addresses from Terraform.
-# Example usage: bin/kamal_tf deploy
+# The server IP in this file is updated automatically by the "stand-up" script.
+# See terraform-gcloud/bin/stand-up for details.
 
 # Name of your application. Used to uniquely configure containers.
 service: rails_kamal_demo
@@ -11,7 +10,7 @@ image: shakacodedemo/rails_kamal_demo
 # Deploy to these servers.
 servers:
   web: # Next value is set by Terraform script "stand-up" in sibling repo
-    - 34.59.165.111
+    - 34.29.79.152
 #  job:
 #     hosts:
 #       - 34.59.165.111
@@ -21,7 +20,9 @@ servers:
 # Remove this section when using multiple web servers and ensure you terminate SSL at your load balancer.
 #
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
-#  uncomment next line for a real host name
+#
+# No domain? Set ssl: false and host: <YOUR_SERVER_IP> to use plain HTTP.
+# See README.md "Deploying Without a Domain Name" for details.
 proxy:
   ssl: true
   # IMPT: Edit for your real host name
@@ -85,13 +86,14 @@ asset_path: /rails/public/assets
 # Configure the image builder.
 builder:
   arch: amd64
+  args:
+    GIT_REVISION: "<%= `git rev-parse HEAD`.strip %>"
+    BUILD_TIME: "<%= Time.now.utc.iso8601 %>"
 
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
-  # # Pass arguments and secrets to the Docker build process
-  # args:
-  #   RUBY_VERSION: ruby-3.3.4
+  # # Pass additional arguments and secrets to the Docker build process
   # secrets:
   #   - GITHUB_TOKEN
   #   - RAILS_MASTER_KEY
@@ -126,4 +128,4 @@ ssh:
 
 # Configure rolling deploys by setting a wait time between batches of restarts.
 # 30 is the default. First deploy will need a longer time to create the database.
-deploy_timeout: 30
+deploy_timeout: 120
