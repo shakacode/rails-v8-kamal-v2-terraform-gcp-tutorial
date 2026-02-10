@@ -133,12 +133,12 @@ production:
 ```
 
 ## Database Setup and Migrations
-The database is automatically created and migrated when the Rails app is deployed. This is done via the [bin/docker-entrypoint.sh](bin/docker-entrypoint.sh) script which calls `rails db:prepare`.
+The database is automatically created and migrated when the Rails app is deployed. This is done via the [bin/docker-entrypoint](bin/docker-entrypoint) script which calls `rails db:prepare`.
 
 Note, the initial deployment will fail because the database schema needs to be created. This is expected. Just run `bundle exec kamal deploy` again after the initial setup.
 
 ## Automated Deployment
-Run `bin/terraform-gcloud/bin/stand-up` to create the infrastructure on Google Cloud and deploy the Rails app using Kamal v2.
+Run `terraform-gcloud/bin/stand-up` to create the infrastructure on Google Cloud and deploy the Rails app using Kamal v2.
 
 This script has some useful features:
 
@@ -169,7 +169,7 @@ This script has some useful features:
 
 ## Tear Down
 
-When you're done, run `bin/terraform-gcloud/bin/tear-down` to destroy the infrastructure on Google Cloud (and save any costs!)
+When you're done, run `terraform-gcloud/bin/tear-down` to destroy the infrastructure on Google Cloud (and save any costs!)
 
 The `tear-down` script has some useful features:
 1. Ensures calling `kamal app stop` or else terraform cannot destroy the database.
