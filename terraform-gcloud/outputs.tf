@@ -1,7 +1,7 @@
 # Outputs
 output "instance_ip" {
-  description = "The external IP of the Compute Engine instance"
-  value       = google_compute_instance.rails_app.network_interface[0].access_config[0].nat_ip
+  description = "The static external IP of the Compute Engine instance"
+  value       = google_compute_address.rails_app_ip.address
 }
 
 output "db_instance_connection_name" {

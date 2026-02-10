@@ -29,6 +29,19 @@ resource "google_project_iam_member" "iam_service_account_user_role" {
 }
 
 ########################################
+#   Static IP Address
+########################################
+# A static IP survives instance stop/start cycles (e.g., machine type changes via
+# terraform apply). Without this, GCP assigns a new ephemeral IP each time the
+# instance is stopped, silently breaking Kamal's SSH connection and DNS.
+# Cost: free while attached to a running instance.
+# Released by `terraform destroy` (via tear-down script) — no lingering cost.
+resource "google_compute_address" "rails_app_ip" {
+  name   = "rails-app-ip"
+  region = "us-central1"
+}
+
+########################################
 #   Compute Instance (runs Cloud SQL Proxy)
 ########################################
 resource "google_compute_instance" "rails_app" {
@@ -48,7 +61,7 @@ resource "google_compute_instance" "rails_app" {
     network = "default"
 
     access_config {
-      # This is required to assign an external IP
+      nat_ip = google_compute_address.rails_app_ip.address
     }
   }
 

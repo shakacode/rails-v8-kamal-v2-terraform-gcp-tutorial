@@ -10,7 +10,7 @@ image: shakacodedemo/rails_kamal_demo
 # Deploy to these servers.
 servers:
   web: # Next value is set by Terraform script "stand-up" in sibling repo
-    - 35.222.208.101
+    - 34.29.79.152
 #  job:
 #     hosts:
 #       - 34.59.165.111

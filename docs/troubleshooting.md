@@ -42,7 +42,7 @@ resource "google_compute_instance" "rails_app" {
 
 Then apply: `cd terraform-gcloud && terraform apply`
 
-**Note:** Changing machine type requires the instance to be stopped and restarted, which will cause brief downtime. Docker containers auto-restart after reboot.
+**Note:** Changing machine type requires the instance to be stopped and restarted, which will cause brief downtime. Docker containers auto-restart after reboot. The static IP (see below) ensures the IP address stays the same — no need to update `config/deploy.yml` or DNS.
 
 **Gotcha:** If `terraform apply` fails with `please set allow_stopping_for_update = true`, the Terraform config is missing the flag that permits Terraform to stop a running instance. This is already set in the project's `main.tf`, but if you're adapting this for your own project, make sure to include it:
 
@@ -52,6 +52,37 @@ resource "google_compute_instance" "rails_app" {
   # ...
 }
 ```
+
+## Static IP Address
+
+### Why Use a Static IP?
+
+The initial `stand-up` script handles IP assignment automatically — it reads the IP from `terraform output`, updates `config/deploy.yml`, and prompts you to set up DNS. So on first deploy, a static IP isn't necessary.
+
+The static IP matters for **"day 2" operations** — when you run `terraform apply` directly to resize the instance, change settings, etc. (not going through a full tear-down/stand-up cycle). Without a static IP, GCP assigns a new ephemeral IP every time an instance is stopped, silently breaking:
+- Kamal (which connects via the IP in `config/deploy.yml`)
+- Your DNS record (still pointing to the old IP)
+
+The only symptom is a cryptic `Net::SSH::ConnectionTimeout` from Kamal — nothing tells you the IP changed. With a static IP, the address survives instance stop/start cycles and everything keeps working.
+
+### When It Doesn't Help
+
+A `tear-down` / `stand-up` cycle destroys and recreates the static IP, so you get a new address regardless. The `stand-up` script handles updating `config/deploy.yml` and prompts you to update DNS, so the static IP adds no value in this flow.
+
+### Cost
+
+Free while attached to a running instance. ~$0.01/hr (~$7/month) only if reserved but not attached. Since `tear-down` runs `terraform destroy` which releases the IP, there's no lingering cost.
+
+### Diagnosing an IP Change
+
+If Kamal gives `Net::SSH::ConnectionTimeout` but the instance shows `RUNNING`, check whether the IP changed:
+
+```bash
+gcloud compute instances describe rails-app-instance \
+  --zone=us-central1-a --format="value(networkInterfaces[0].accessConfigs[0].natIP)"
+```
+
+Compare this to the IP in `config/deploy.yml`. If they differ, either add a `google_compute_address` to your Terraform config (recommended) or manually update `deploy.yml` and DNS.
 
 ## Deploy Stuck at Health Check
 

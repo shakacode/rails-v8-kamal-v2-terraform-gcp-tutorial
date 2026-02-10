@@ -87,9 +87,9 @@ These Terraform changes take effect without redeploying the app:
 
 ### Changes That Require Instance Restart (Causes Downtime)
 
-- **Machine type** (e.g., `e2-micro` → `e2-small`) — Terraform stops the instance, changes the type, and restarts it. After restart, Docker auto-starts containers with `--restart unless-stopped`, so the app should come back up automatically.
+- **Machine type** (e.g., `e2-micro` → `e2-small`) — Terraform stops the instance, changes the type, and restarts it. After restart, Docker auto-starts containers with `--restart unless-stopped`, so the app should come back up automatically. The static IP (`google_compute_address`) ensures the IP stays the same — no need to update `config/deploy.yml` or DNS.
 
-- **Boot disk image** — requires instance recreation (Terraform will destroy and recreate).
+- **Boot disk image** — requires instance recreation (Terraform will destroy and recreate). The static IP is preserved since it's a separate resource.
 
 ### Changes That Require Kamal Redeploy
 
@@ -167,7 +167,7 @@ terraform plan   # Will show: ~ update in-place (instance must be stopped)
 terraform apply  # Terraform stops, resizes, and restarts the instance
 ```
 
-**Downtime:** Yes, typically 1-2 minutes while the instance stops and restarts. Docker containers auto-restart after reboot. The `allow_stopping_for_update = true` setting in the Terraform config permits Terraform to stop the instance for this change.
+**Downtime:** Yes, typically 1-2 minutes while the instance stops and restarts. Docker containers auto-restart after reboot. The `allow_stopping_for_update = true` setting in the Terraform config permits Terraform to stop the instance for this change. The static IP ensures `config/deploy.yml` and DNS remain valid.
 
 **Tip:** After major gem or framework upgrades, monitor memory during deploys with `docker stats --no-stream` on the server. If the instance becomes unresponsive during deploys, it's a sign you need a larger instance.
 
