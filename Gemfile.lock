@@ -152,8 +152,7 @@ GEM
     matrix (0.4.2)
     mini_mime (1.1.5)
     mini_portile2 (2.8.8)
-    minitest (6.0.1)
-      prism (~> 1.5)
+    minitest (5.27.0)
     msgpack (1.7.5)
     net-imap (0.6.2)
       date
@@ -179,7 +178,6 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.5.9)
-    prism (1.9.0)
     propshaft (1.1.0)
       actionpack (>= 7.0.0)
       activesupport (>= 7.0.0)
@@ -352,7 +350,7 @@ DEPENDENCIES
   importmap-rails
   jbuilder
   kamal
-  minitest (~> 6.0)
+  minitest (~> 5.0)
   pg (~> 1.1)
   propshaft
   puma (>= 6.0)
