@@ -90,7 +90,7 @@ Compare this to the IP in `config/deploy.yml`. If they differ, either add a `goo
 
 `bin/kamal deploy` hangs at the kamal-proxy deploy step:
 
-```
+```text
 INFO Running docker exec kamal-proxy kamal-proxy deploy rails_kamal_demo-web
   --target="<container_id>:80" --deploy-timeout="120s" ...
 ```
@@ -196,7 +196,7 @@ bin/kamal deploy
 
 ### Symptoms
 
-```
+```text
 ERROR (Kamal::Cli::LockError): Deploy lock found. Run 'kamal lock help' for more information
 ```
 
@@ -265,7 +265,7 @@ docker exec kamal-proxy kamal-proxy deploy rails_kamal_demo-web \
 
 App logs show:
 
-```
+```text
 ActiveRecord::DatabaseConnectionError There is an issue connecting with your hostname: 172.18.0.1
 ```
 

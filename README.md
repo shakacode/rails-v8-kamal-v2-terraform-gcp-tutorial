@@ -161,7 +161,7 @@ This script:
 1. Runs `terraform apply` to create the infrastructure (~10 minutes, mostly Cloud SQL provisioning).
 2. Updates the `config/deploy.yml` with the new server IP address.
 3. Prompts you to update your DNS. **You manage DNS with your own domain registrar** (e.g., GoDaddy, Namecheap, Cloudflare, etc.) — not through Google Cloud. Add or update an `A` record pointing your chosen subdomain (e.g., `gcp.yourdomain.com`) to the IP address shown in the output. The script will poll DNS until it resolves correctly.
-   ```
+   ```text
    Outputs:
    db_primary_name = "rails_kamal_demo_production"
    db_user = "rails_user"
@@ -207,7 +207,7 @@ First, ensure that you can run `terraform` commands to create the infrastructure
    terraform apply    # Create the infrastructure (type 'yes' to confirm)
    ```
 4. `terraform apply` takes about 10 minutes, mainly due to provisioning the Cloud SQL database. Watch the output to see each resource being created. At the end, Terraform prints:
-   ```
+   ```text
    instance_ip = "x.x.x.x"
    project_id = "your-project-id"
    ```

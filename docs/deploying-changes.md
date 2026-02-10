@@ -71,7 +71,7 @@ Use this workflow when you need to change GCP resources: instance size, database
 
 ### Workflow Overview
 
-```
+```text
 Edit terraform-gcloud/*.tf → terraform plan → terraform apply → (optional) kamal deploy
 ```
 
