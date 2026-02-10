@@ -50,7 +50,39 @@ class DeploymentManager
 
   def apply_terraform
     log_step "Applying Terraform Infrastructure"
+    import_static_ip_if_exists
     execute_command_in_dir("terraform apply -auto-approve", @terraform_dir, "❌ Terraform apply failed!")
+  end
+
+  def import_static_ip_if_exists
+    # If the IP is already in Terraform state, nothing to do.
+    _, status = Open3.capture2("terraform", "state", "show", "google_compute_address.rails_app_ip",
+                               chdir: @terraform_dir, err: File::NULL)
+    if status.success?
+      puts "✅ Static IP already in Terraform state"
+      return
+    end
+
+    project_id = parse_project_id_from_variables
+    return unless project_id
+
+    # Try to import a static IP preserved from a previous tear-down.
+    puts "Checking for existing static IP to import..."
+    import_id = "projects/#{project_id}/regions/us-central1/addresses/rails-app-ip"
+    _, status = Open3.capture2("terraform", "import", "google_compute_address.rails_app_ip", import_id,
+                               chdir: @terraform_dir, err: File::NULL)
+    if status.success?
+      puts "✅ Imported existing static IP — DNS and deploy.yml remain stable"
+    else
+      puts "ℹ️  No existing static IP found — Terraform will create a new one"
+    end
+  end
+
+  def parse_project_id_from_variables
+    vars_file = File.join(@terraform_dir, "variables.tf")
+    return unless File.exist?(vars_file)
+
+    File.read(vars_file)[/variable\s+"project_id".*?default\s*=\s*"([^"]+)"/m, 1]
   end
 
   def deployed_ip
