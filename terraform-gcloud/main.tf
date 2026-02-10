@@ -32,10 +32,11 @@ resource "google_project_iam_member" "iam_service_account_user_role" {
 #   Compute Instance (runs Cloud SQL Proxy)
 ########################################
 resource "google_compute_instance" "rails_app" {
-  name         = "rails-app-instance"
-  machine_type = "e2-small" # 0.5 vCPU, 2 GB RAM — minimum for reliable Kamal deploys
-  zone         = "us-central1-a"
-  tags         = ["http-server", "https-server"]
+  name                      = "rails-app-instance"
+  machine_type              = "e2-small" # 0.5 vCPU, 2 GB RAM — minimum for reliable Kamal deploys
+  zone                      = "us-central1-a"
+  tags                      = ["http-server", "https-server"]
+  allow_stopping_for_update = true
 
   boot_disk {
     initialize_params {

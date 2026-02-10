@@ -44,6 +44,15 @@ Then apply: `cd terraform-gcloud && terraform apply`
 
 **Note:** Changing machine type requires the instance to be stopped and restarted, which will cause brief downtime. Docker containers auto-restart after reboot.
 
+**Gotcha:** If `terraform apply` fails with `please set allow_stopping_for_update = true`, the Terraform config is missing the flag that permits Terraform to stop a running instance. This is already set in the project's `main.tf`, but if you're adapting this for your own project, make sure to include it:
+
+```terraform
+resource "google_compute_instance" "rails_app" {
+  allow_stopping_for_update = true
+  # ...
+}
+```
+
 ## Deploy Stuck at Health Check
 
 ### Symptoms

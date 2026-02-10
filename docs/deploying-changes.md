@@ -167,7 +167,7 @@ terraform plan   # Will show: ~ update in-place (instance must be stopped)
 terraform apply  # Terraform stops, resizes, and restarts the instance
 ```
 
-**Downtime:** Yes, typically 1-2 minutes while the instance stops and restarts. Docker containers auto-restart after reboot.
+**Downtime:** Yes, typically 1-2 minutes while the instance stops and restarts. Docker containers auto-restart after reboot. The `allow_stopping_for_update = true` setting in the Terraform config permits Terraform to stop the instance for this change.
 
 **Tip:** After major gem or framework upgrades, monitor memory during deploys with `docker stats --no-stream` on the server. If the instance becomes unresponsive during deploys, it's a sign you need a larger instance.
 
