@@ -160,7 +160,7 @@ This script:
 
 1. Runs `terraform apply` to create the infrastructure (~10 minutes, mostly Cloud SQL provisioning).
 2. Updates the `config/deploy.yml` with the new server IP address.
-3. Prompts you to update your DNS. **You manage DNS with your own domain registrar** (e.g., GoDaddy, Namecheap, Cloudflare, etc.) — not through Google Cloud. Add or update an `A` record pointing your chosen subdomain (e.g., `gcp.yourdomain.com`) to the IP address shown in the output. The script will poll DNS until it resolves correctly.
+3. Prompts you to update your DNS. **You manage DNS with your own domain registrar** (e.g., GoDaddy, Namecheap, Cloudflare, etc.) — not through Google Cloud. Add or update an `A` record pointing your chosen subdomain (e.g., `gcp.yourdomain.com`) to the IP address shown in the output. The script will poll DNS until it resolves correctly. (Don't have a domain? See [Deploying Without a Domain Name](#deploying-without-a-domain-name).)
    ```text
    Outputs:
    db_primary_name = "rails_kamal_demo_production"
@@ -252,6 +252,24 @@ Then verify in the browser:
 2. Create, edit, and delete a Post — confirm CRUD works end-to-end
 3. Check the footer — should show `rev <sha> · deployed X ago` (production only)
 4. Check the browser console — no JavaScript errors
+
+## Deploying Without a Domain Name
+
+The default setup uses a domain name with automatic SSL via Let's Encrypt, which is the recommended production configuration. If you don't have a domain name or just want to experiment quickly, you can deploy using only the server's IP address over plain HTTP.
+
+1. In `config/deploy.yml`, change the proxy section:
+
+   ```yaml
+   proxy:
+     ssl: false
+     host: <YOUR_SERVER_IP>  # e.g., 34.29.79.152
+   ```
+
+2. Skip the DNS step during `stand-up` (Ctrl-C when prompted for DNS verification), or deploy manually with `bin/kamal setup`.
+
+3. Access your app at `http://<YOUR_SERVER_IP>` (no HTTPS).
+
+**Note:** With `ssl: false`, kamal-proxy serves HTTP only on port 80. There is no encryption — this is fine for experimentation but not suitable for production. To switch to SSL later, update the proxy section with your domain and `ssl: true`, then redeploy with `bin/kamal deploy`.
 
 ## Troubleshooting
 If you encounter any issues during the deployment process, here are some common troubleshooting steps.
