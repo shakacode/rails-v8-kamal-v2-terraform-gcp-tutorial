@@ -33,7 +33,7 @@ resource "google_project_iam_member" "iam_service_account_user_role" {
 ########################################
 resource "google_compute_instance" "rails_app" {
   name         = "rails-app-instance"
-  machine_type = "e2-micro" # Minimal compute resources
+  machine_type = "e2-small" # 0.5 vCPU, 2 GB RAM — minimum for reliable Kamal deploys
   zone         = "us-central1-a"
   tags         = ["http-server", "https-server"]
 

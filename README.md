@@ -59,7 +59,11 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
    3. Change the `ssh.user` to your username.
 
 See [docs/prerequisites.md](docs/prerequisites.md) for more detailed setup instructions.
-                            
+
+See [docs/deploying-changes.md](docs/deploying-changes.md) for step-by-step guides on deploying code changes and infrastructure changes.
+
+See [docs/troubleshooting.md](docs/troubleshooting.md) for debugging deploy issues, SSH failures, and instance recovery.
+
 ## Rails 8 Defaults
 This Rails 8 example app differs as little as possible from the default Rails 8 app. The main differences are:
 1. Terraform setup in the `terraform-gcloud` directory. Terraform is super nice because you can follow the example with minimal work to get your Rails app running on Google Cloud. For a non-tutorial application, you'd put the Terraform files in a separate git repo.
