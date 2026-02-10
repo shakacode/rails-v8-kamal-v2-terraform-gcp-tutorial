@@ -55,10 +55,12 @@ class DeploymentManager
 
   def deployed_ip
     @deployed_ip ||= begin
-                       terraform_output = Dir.chdir(@terraform_dir) { JSON.parse(`terraform output -json`) }
-                       deployed_ip = terraform_output.dig("instance_ip", "value") or abort("❌ Missing instance_ip in Terraform output")
-                       puts "✅ Deployed IP acquired: #{deployed_ip}"
-                       deployed_ip
+                       output, status = Open3.capture2("terraform", "output", "-json", chdir: @terraform_dir)
+                       abort("❌ terraform output failed (exit #{status.exitstatus})") unless status.success?
+                       terraform_output = JSON.parse(output)
+                       ip = terraform_output.dig("instance_ip", "value") or abort("❌ Missing instance_ip in Terraform output")
+                       puts "✅ Deployed IP acquired: #{ip}"
+                       ip
                      end
   end
 
@@ -79,7 +81,7 @@ class DeploymentManager
   end
 
   def update_ip_in_config(old_ip, new_ip)
-    @yaml_content.gsub!(old_ip, new_ip)
+    @yaml_content.sub!(old_ip, new_ip)
   end
 
   def update_timeout_in_config
@@ -114,7 +116,7 @@ class DeploymentManager
         return
       end
 
-      puts "\n⏳ Current DNS: #{resolved_ip || 'not resolved'} (Expected: #{deployed_ip})"
+      puts "\n⏳ Current DNS: #{resolve_dns || 'not resolved'} (Expected: #{deployed_ip})"
     end
   end
 
@@ -157,7 +159,7 @@ class DeploymentManager
     duration = end_time - start_time
     minutes = (duration / 60).to_i
     seconds = (duration % 60).round(2)
-    puts "⏱️ Command \''#{command}\" took #{minutes} minutes and #{seconds} seconds to execute.\n\n"
+    puts "⏱️ Command '#{command}' took #{minutes} minutes and #{seconds} seconds to execute.\n\n"
     abort(error_message) unless status_ok
   end
 end

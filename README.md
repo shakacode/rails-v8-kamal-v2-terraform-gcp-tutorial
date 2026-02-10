@@ -14,11 +14,11 @@ Check out [ShakaCode's Infrastructure Optimization Services](https://www.shakaco
 ### Other Resources 
 * [Click to join **React + Rails Slack** to chat with Justin](https://reactrails.slack.com/join/shared_invite/enQtNjY3NTczMjczNzYxLTlmYjdiZmY3MTVlMzU2YWE0OWM0MzNiZDI0MzdkZGFiZTFkYTFkOGVjODBmOWEyYWQ3MzA2NGE1YWJjNmVlMGE).
 
-## Kamal Basics 
+## Kamal Basics
 
-In order to use Kamal, you should try to understand what's going on from first principles.
+In order to use [Kamal](https://kamal-deploy.org/), you should try to understand what's going on from first principles.
 
-Kamal is a CLI that uses configuration files to orchestrate commands for Docker deployment on remote machines.
+Kamal is a CLI that uses configuration files to orchestrate commands for Docker deployment on remote machines. See the [Kamal documentation](https://kamal-deploy.org/docs/installation/) for installation and usage details.
 
 Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
 1. Kamal gives lots of output to the command line on what's running
@@ -36,7 +36,7 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
 ## Requirements
 
 1. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) with a gcloud account.
-2. [Terraform](https://learn.hashicorp.com/tutorials/terraform/install-cli).
+2. [Terraform](https://developer.hashicorp.com/terraform/install).
 3. Some domain name where you can add an A record to point to your server's IP address.
 3. Docker
 4. Ruby 3.4.3
@@ -63,7 +63,11 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
    3. Change the `ssh.user` to your username.
 
 See [docs/prerequisites.md](docs/prerequisites.md) for more detailed setup instructions.
-                            
+
+See [docs/deploying-changes.md](docs/deploying-changes.md) for step-by-step guides on deploying code changes and infrastructure changes.
+
+See [docs/troubleshooting.md](docs/troubleshooting.md) for debugging deploy issues, SSH failures, and instance recovery.
+
 ## Rails 8 Defaults
 This Rails 8 example app differs as little as possible from the default Rails 8 app. The main differences are:
 1. Terraform setup in the `terraform-gcloud` directory. Terraform is super nice because you can follow the example with minimal work to get your Rails app running on Google Cloud. For a non-tutorial application, you'd put the Terraform files in a separate git repo.
@@ -81,8 +85,10 @@ Note:
 3. Click on "Create Secret" to add a new secret.
 4. Add the following 3 secrets:
    - `KAMAL_REGISTRY_PASSWORD`: The password for the Docker registry.
-   - `DB_PASSWORD`: The password for the database, as you like. 
-   - `SECRET_KEY_BASE`: Generate with `rails secret`. 
+   - `DB_PASSWORD`: The password for the database, as you like.
+   - `SECRET_KEY_BASE`: Generate with `rails secret`.
+
+![GCP Secret Manager](docs/images/gcp-secret-manager.png)
 
 ### `deploy.yml`
 Note that the `deploy.yml` already has:
@@ -135,72 +141,141 @@ production:
 ```
 
 ## Database Setup and Migrations
-The database is automatically created and migrated when the Rails app is deployed. This is done via the [bin/docker-entrypoint.sh](bin/docker-entrypoint.sh) script which calls `rails db:prepare`.
+The database is automatically created and migrated when the Rails app is deployed. This is done via the [bin/docker-entrypoint](bin/docker-entrypoint) script which calls `rails db:prepare`.
 
-Note, the initial deployment will fail because the database schema needs to be created. This is expected. Just run `bundle exec kamal deploy` again after the initial setup.
+Note, the initial deployment will likely fail because the database schema needs to be created — `db:prepare` must create 4 databases (primary, cache, queue, cable) and run all migrations, which can exceed the health check timeout. This is expected. Just run `./bin/kamal deploy` again after the initial setup.
+
+## Scripts
+
+The `terraform-gcloud/bin/` directory contains helper scripts for managing infrastructure:
+
+| Script | Language | Purpose |
+|--------|----------|---------|
+| `stand-up` | Ruby | Full automated deployment: terraform apply, update deploy.yml IP, DNS verification, kamal setup |
+| `tear-down` | Bash | Graceful teardown: kamal app stop, then terraform destroy |
+| `cleanup-backups` | Bash | Remove old Terraform state backup files |
+
+The `stand-up` script uses the `DeploymentManager` class in `lib/deployment_manager.rb`, which orchestrates the full deployment flow and provides colored output with timing for each step.
 
 ## Automated Deployment
-Run `bin/terraform-gcloud/bin/stand-up` to create the infrastructure on Google Cloud and deploy the Rails app using Kamal v2.
+Run `terraform-gcloud/bin/stand-up` to create the infrastructure on Google Cloud and deploy the Rails app using Kamal v2.
 
-This script has some useful features:
+This script:
 
-1. It creates the infrastructure on Google Cloud using Terraform.
-2. It updates the deploy.yml config file to reflect the IP address of the server and makes a longer deployment timeout.
-3. You get a chance to add an A record to your domain name pointing to the IP address.
-   ```
+1. Runs `terraform apply` to create the infrastructure (~10 minutes, mostly Cloud SQL provisioning).
+2. Updates the `config/deploy.yml` with the new server IP address.
+3. Prompts you to update your DNS. **You manage DNS with your own domain registrar** (e.g., GoDaddy, Namecheap, Cloudflare, etc.) — not through Google Cloud. Add or update an `A` record pointing your chosen subdomain (e.g., `gcp.yourdomain.com`) to the IP address shown in the output. The script will poll DNS until it resolves correctly. (Don't have a domain? See [Deploying Without a Domain Name](#deploying-without-a-domain-name).)
+   ```text
    Outputs:
    db_primary_name = "rails_kamal_demo_production"
    db_user = "rails_user"
    instance_ip = "34.59.165.111"
    project_id = "kamal-demo-444506"
    ✅ New IP acquired: 34.59.165.111
-   
+
    === Updating Configuration ===
-   Old timeout was set to 30 seconds
+   Old timeout was set to 120 seconds
    ✅ Updated deploy.yml with new IP and timeout
    ✅ Timeout is now set to 120 seconds
-   
+
    === Verifying DNS Configuration ===
    Edit DNS for `kamaltutorial.com`: Update or add a DNS Type `A` record, Name: `gcp`, Value: `34.59.165.111`
    Press return to check DNS (or Ctrl-C to exit):
    Checking DNS...
    ✅ DNS verification successful! gcp.kamaltutorial.com → 34.59.165.111
    ```
-4. It deploys the Rails app using Kamal v2.
+4. Runs `kamal setup` to build and deploy the Rails app.
 5. Visit your domain name in the browser to see your Rails app running on Google Cloud!
 
 ## Tear Down
 
-When you're done, run `bin/terraform-gcloud/bin/tear-down` to destroy the infrastructure on Google Cloud (and save any costs!)
+When you're done, run `terraform-gcloud/bin/tear-down` to destroy the infrastructure on Google Cloud (and save any costs!)
 
-The `tear-down` script has some useful features:
-1. Ensures calling `kamal app stop` or else terraform cannot destroy the database.
-2. Call `terraform destroy` to destroy the infrastructure on Google Cloud.
+The `tear-down` script:
+1. Runs `kamal app stop` to stop the Rails app. This is required before destroying infrastructure — Terraform cannot destroy the Cloud SQL database while active connections exist.
+2. Runs `terraform destroy` to remove all GCP resources (Compute Engine, Cloud SQL, firewall rules, service accounts).
 
 ## Step by Step
-To get a sense of the basics of Terraform and Kamal v2, follow these steps.
+To get a sense of the basics of Terraform and Kamal v2, follow these steps manually instead of using the automated scripts. This helps you understand what each command does and see the output from each step.
 
-###  Terraform Setup
+### Terraform Setup
 First, ensure that you can run `terraform` commands to create the infrastructure on Google Cloud.
 
-1. Install the Google Cloud SDK and Terraform.
-2. Run terraform commands from `cd terraform-gcloud`.
+1. Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (see [docs/prerequisites.md](docs/prerequisites.md) for platform-specific instructions) and [Terraform](https://developer.hashicorp.com/terraform/install) (via [Homebrew](https://brew.sh/): `brew tap hashicorp/tap && brew install hashicorp/tap/terraform`, or download from the [Terraform downloads page](https://developer.hashicorp.com/terraform/install)).
 2. Update the `terraform-gcloud/variables.tf` file with your project details as described above.
-3. Run `terraform init` in the `terraform-gcloud` directory to initialize the Terraform configuration.
-4. Run `terraform plan` to see the changes that Terraform will make to your infrastructure.
-5. Run `terraform apply` to create the infrastructure on Google Cloud. This takes about 10 minutes mainly due to provisioning the database. Note that the output will include the IP address of the server. You need this for 2 reasons:
-   1. To add an A record to your domain name.
+3. Run terraform commands from the `terraform-gcloud` directory:
+   ```bash
+   cd terraform-gcloud
+   terraform init     # Initialize Terraform and download providers
+   terraform plan     # Preview what will be created
+   terraform apply    # Create the infrastructure (type 'yes' to confirm)
+   ```
+4. `terraform apply` takes about 10 minutes, mainly due to provisioning the Cloud SQL database. Watch the output to see each resource being created. At the end, Terraform prints:
+   ```text
+   instance_ip = "x.x.x.x"
+   project_id = "your-project-id"
+   ```
+5. You need the IP address for 2 things:
+   1. To add an A record to your domain name at your registrar.
    2. To update the `config/deploy.yml` file with the IP address for your server.
-6. Run `terraform destroy` to tear down the infrastructure when you're done (after practicing the Kamal deployment)
+6. Run `terraform destroy` to tear down the infrastructure when you're done (after practicing the Kamal deployment).
 
 ### Kamal v2 Deployment
-Next, ensure that you can deploy the Rails app using Kamal v2.
+Next, deploy the Rails app using Kamal v2. Make sure you've updated `config/deploy.yml` with the new IP and that DNS is pointing to it.
 
 > **Note for Apple Silicon (M1/M2/M3/M4) users:** The Docker image is built for `linux/amd64`, so building locally on ARM Macs uses QEMU emulation, which can take 20-30 minutes even for this small app. Linux x86_64 users will see much faster builds (3-5 minutes). To speed up builds on ARM Macs, you can use a remote amd64 builder by setting the `remote` option in the `builder` section of `config/deploy.yml` and pointing it to an amd64 machine with Docker installed. See the [Kamal docs on remote builds](https://kamal-deploy.org/docs/configuration/builders/) for details.
 
-1. Run `./bin/kamal setup` to set up the Kamal v2 configuration. Notice the error that the health checks failed. This is expected because the database needs to be created and migrated.
-2. Unless you change the `deploy.yml` file to have a longer `deploy_timeout`, you'll need to run `./bin/kamal deploy` a second time, because the database needs to be created and migrated. The `stand-up` script does this for you.
+1. Run `./bin/kamal setup` for the first deployment. This builds the Docker image, pushes it to Docker Hub, installs kamal-proxy on the server, and starts the app container. The first run will likely fail on the health check because database setup takes time.
+2. Run `./bin/kamal deploy` a second time. Now that the databases exist, the app starts quickly and passes the health check.
 3. Visit your domain name in the browser to see your Rails app running on Google Cloud!
+
+### Subsequent Deploys
+After the initial setup, subsequent deploys are much faster because Docker layer caching means only changed layers are rebuilt. If you're only changing Rails application code (not Gemfile or system packages), the build reuses cached layers for the base image, system packages, and gem installation — only the `COPY . .` and asset precompilation steps run, which typically takes a few minutes instead of 10+.
+
+```bash
+./bin/kamal deploy
+```
+
+### Verification Checklist
+After deploying, verify the app is working correctly:
+
+```bash
+# Check running containers and kamal-proxy status
+./bin/kamal details
+
+# Tail the Rails logs (Ctrl-C to stop)
+./bin/kamal logs
+
+# Open a Rails console on the server
+./bin/kamal console
+
+# Open a bash shell in the container
+./bin/kamal shell
+```
+
+Then verify in the browser:
+1. Visit `https://your-domain.com` — confirm the app loads with SSL (padlock icon)
+2. Create, edit, and delete a Post — confirm CRUD works end-to-end
+3. Check the footer — should show `rev <sha> · deployed X ago` (production only)
+4. Check the browser console — no JavaScript errors
+
+## Deploying Without a Domain Name
+
+The default setup uses a domain name with automatic SSL via Let's Encrypt, which is the recommended production configuration. If you don't have a domain name or just want to experiment quickly, you can deploy using only the server's IP address over plain HTTP.
+
+1. In `config/deploy.yml`, change the proxy section:
+
+   ```yaml
+   proxy:
+     ssl: false
+     host: <YOUR_SERVER_IP>  # e.g., 34.29.79.152
+   ```
+
+2. Skip the DNS step during `stand-up` (Ctrl-C when prompted for DNS verification), or deploy manually with `bin/kamal setup`.
+
+3. Access your app at `http://<YOUR_SERVER_IP>` (no HTTPS).
+
+**Note:** With `ssl: false`, kamal-proxy serves HTTP only on port 80. There is no encryption — this is fine for experimentation but not suitable for production. To switch to SSL later, update the proxy section with your domain and `ssl: true`, then redeploy with `bin/kamal deploy`.
 
 ## Troubleshooting
 If you encounter any issues during the deployment process, here are some common troubleshooting steps.
