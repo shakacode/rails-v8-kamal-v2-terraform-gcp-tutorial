@@ -2,22 +2,23 @@
 
 module DeployInfo
   GIT_REVISION = ENV.fetch("GIT_REVISION", nil)
-  BUILD_TIME = ENV.fetch("BUILD_TIME", nil)
+  GIT_REVISION_SHORT = GIT_REVISION&.slice(0, 7)
+  BUILD_TIME = begin
+    Time.parse(ENV.fetch("BUILD_TIME", ""))
+  rescue ArgumentError
+    nil
+  end
 
   def self.git_revision
     GIT_REVISION
   end
 
   def self.git_revision_short
-    GIT_REVISION&.first(7)
+    GIT_REVISION_SHORT
   end
 
   def self.build_time
-    return unless BUILD_TIME
-
-    Time.parse(BUILD_TIME)
-  rescue ArgumentError
-    nil
+    BUILD_TIME
   end
 
   def self.available?
