@@ -82,7 +82,7 @@ GEM
     bcrypt_pbkdf (1.1.2)
     bigdecimal (4.0.1)
     bindex (0.8.1)
-    bootsnap (1.18.4)
+    bootsnap (1.22.0)
       msgpack (~> 1.2)
     brakeman (8.0.2)
       racc
@@ -159,7 +159,7 @@ GEM
     mini_portile2 (2.8.9)
     minitest (6.0.1)
       prism (~> 1.5)
-    msgpack (1.7.5)
+    msgpack (1.8.0)
     net-imap (0.6.2)
       date
       net-protocol
