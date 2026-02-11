@@ -309,6 +309,21 @@ First, it's important to understand the execution context of when running comman
    * `docker logs CONTAINER_ID` to see the logs of a container.
    * `docker exec -it CONTAINER_ID bash` to get a shell in a container.
 
+### Stale DNS Cache
+If your domain still resolves to the old IP after updating the DNS A record, your local machine is likely serving a cached result. The `stand-up` script flushes the local DNS cache automatically when the IP changes, but if you need to do it manually:
+
+**macOS:**
+```bash
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+```
+
+**Linux (systemd):**
+```bash
+sudo systemd-resolve --flush-caches
+```
+
+Then verify with `dig +short your-domain.com` (dig bypasses the OS cache, so also try `ping your-domain.com` to confirm the OS itself sees the new IP).
+
 ### Troubleshooting Steps
 1. First, read the console messages very carefully and look for the first error message. This is often the most important clue. If there's a health check timeout, it might be due to the failure to run migrations quickly enough, and then you simply need to run `./bin/kamal deploy` again.
 2. Check the logs for the Rails app and the Kamal proxy to see if there are any error messages. You can do this with the command `./bin/kamal logs`.
