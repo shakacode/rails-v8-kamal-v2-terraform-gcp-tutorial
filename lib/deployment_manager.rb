@@ -18,6 +18,7 @@ class DeploymentManager
     apply_terraform
     update_config
     verify_dns
+    flush_local_dns_cache
     run_kamal
     restore_original_timeout
     puts "\n=== Deployment Complete ==="
@@ -100,6 +101,7 @@ class DeploymentManager
   def update_config
     log_step "Updating Configuration"
     old_ip = @config.dig("servers", "web")[0]
+    @ip_changed = old_ip != deployed_ip
     @old_timeout = @config["deploy_timeout"]
     puts "Old timeout was set to #{@old_timeout} seconds"
 
@@ -150,6 +152,23 @@ class DeploymentManager
       end
 
       puts "\n⏳ Current DNS: #{resolve_dns || 'not resolved'} (Expected: #{deployed_ip})"
+    end
+  end
+
+  def flush_local_dns_cache
+    return unless @ip_changed
+
+    # dig (used by verify_dns) queries DNS servers directly, bypassing the OS cache.
+    # The browser and other apps use the OS cache, which may still have the old IP.
+    log_step "Flushing local DNS cache"
+    if RUBY_PLATFORM.include?("darwin")
+      puts "IP address changed — flushing macOS DNS cache..."
+      system("sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder")
+    elsif File.exist?("/usr/bin/systemd-resolve") || File.exist?("/usr/bin/resolvectl")
+      puts "IP address changed — flushing Linux DNS cache..."
+      system("sudo systemd-resolve --flush-caches 2>/dev/null || sudo resolvectl flush-caches 2>/dev/null")
+    else
+      puts "IP address changed — you may need to flush your local DNS cache manually."
     end
   end
 
