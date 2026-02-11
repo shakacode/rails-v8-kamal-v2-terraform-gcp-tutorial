@@ -13,7 +13,7 @@ servers:
     - 34.29.79.152
 #  job:
 #     hosts:
-#       - 34.29.79.152
+#       - 34.59.165.111
 #     cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
@@ -90,10 +90,8 @@ builder:
     GIT_REVISION: "<%= `git rev-parse HEAD`.strip %>"
     BUILD_TIME: "<%= Time.now.utc.iso8601 %>"
 
-  # Build image via remote server (useful for faster amd64 builds on Apple Silicon Macs).
-  # Your GCP instance already has Docker installed, so uncomment and set the IP below.
-  # This avoids slow QEMU emulation (3-5 min vs 20-30 min for fresh builds).
-  # See docs/remote-builder.md for full setup instructions.
+  # Optional: use a remote amd64 builder to avoid slow QEMU emulation on Apple Silicon Macs.
+  # See docs/remote-builder.md for details. Not needed if using CI for builds.
   # remote: ssh://justin@<SERVER_IP>
   #
   # # Pass additional arguments and secrets to the Docker build process

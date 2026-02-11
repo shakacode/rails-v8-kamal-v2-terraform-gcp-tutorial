@@ -230,7 +230,7 @@ Next, deploy the Rails app using Kamal v2. Make sure you've updated `config/depl
 > | **Linux x86_64** | 3-5 minutes | 1-2 minutes |
 > | **Apple Silicon Mac** | 20-30 minutes (QEMU emulation) | 3-5 minutes (cached layers reused) |
 >
-> The Docker image targets `linux/amd64`, so ARM Macs must emulate via QEMU on the first build. Incremental builds are fast on both platforms because Docker layer caching skips unchanged layers (base image, system packages, gems). To avoid the slow first build on ARM Macs, use your GCP instance as a remote amd64 builder — it already has Docker installed. See [docs/remote-builder.md](docs/remote-builder.md) for step-by-step instructions.
+> The Docker image targets `linux/amd64`, so ARM Macs must emulate via QEMU on the first build. Incremental builds are fast on both platforms because Docker layer caching skips unchanged layers (base image, system packages, gems). For production workflows, CI (e.g., GitHub Actions) builds on native amd64 runners, so this is only relevant for local deploys. If the slow first build bothers you, you can optionally use a [remote amd64 builder](docs/remote-builder.md) — your GCP instance already has Docker installed.
 
 1. Run `./bin/kamal setup` for the first deployment. This builds the Docker image, pushes it to Docker Hub, installs kamal-proxy on the server, and starts the app container. The first run will likely fail on the health check because database setup takes time.
 2. Run `./bin/kamal deploy` a second time. Now that the databases exist, the app starts quickly and passes the health check.
