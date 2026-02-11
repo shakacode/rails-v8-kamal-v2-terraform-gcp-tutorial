@@ -140,18 +140,33 @@ class DeploymentManager
     domain = @host.split(".").drop(1).join(".")
 
     puts "Edit DNS for `#{domain}`: Update or add a DNS Type `A` record, Name: `#{subdomain}`, Value: `#{deployed_ip}`"
+    puts ""
+    puts "This check queries Google DNS (8.8.8.8) to avoid local caching issues."
+    puts "See README.md > Troubleshooting > Stale DNS Cache for more details."
 
+    attempts = 0
     loop do
       print "Press return to check DNS (or Ctrl-C to exit): "
       gets.strip
 
-      print "\rChecking DNS..."
+      print "\rChecking DNS via Google (8.8.8.8)..."
       if resolved_host_is_deployed_ip
         puts "\n✅ DNS verification successful! #{@host} → #{deployed_ip}"
         return
       end
 
-      puts "\n⏳ Current DNS: #{resolve_dns || 'not resolved'} (Expected: #{deployed_ip})"
+      attempts += 1
+      current = resolve_dns || "not resolved"
+      puts "\n⏳ Current DNS: #{current} (Expected: #{deployed_ip})"
+
+      if attempts == 3
+        puts ""
+        puts "💡 Still not resolving? A few things to check:"
+        puts "   • Verify the A record is saved in your registrar (GoDaddy, Namecheap, etc.)"
+        puts "   • Confirm the record name is `#{subdomain}` (not `#{@host}`)"
+        puts "   • Try: dig +short #{@host} @8.8.8.8"
+        puts "   • Most registrars update within seconds; if it's been minutes, double-check the record"
+      end
     end
   end
 
@@ -172,8 +187,10 @@ class DeploymentManager
     end
   end
 
-  def resolve_dns
-    output, = Open3.capture2("dig", "+short", @host)
+  def resolve_dns(server: "8.8.8.8")
+    args = ["dig", "+short", @host]
+    args << "@#{server}" if server
+    output, = Open3.capture2(*args)
     output.lines.find { |line| line.match?(/^\d{1,3}(\.\d{1,3}){3}$/) }&.strip
   rescue => e
     puts "\n❌ Error during DNS verification: #{e.message}"
