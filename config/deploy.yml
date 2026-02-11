@@ -90,8 +90,9 @@ builder:
     GIT_REVISION: "<%= `git rev-parse HEAD`.strip %>"
     BUILD_TIME: "<%= Time.now.utc.iso8601 %>"
 
-  # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
-  # remote: ssh://docker@docker-builder-server
+  # Optional: use a remote amd64 builder to avoid slow QEMU emulation on Apple Silicon Macs.
+  # See docs/remote-builder.md for details. Not needed if using CI for builds.
+  # remote: ssh://justin@<SERVER_IP>
   #
   # # Pass additional arguments and secrets to the Docker build process
   # secrets:

@@ -52,8 +52,12 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
    ```bash
    bundle install
    ```
-4. Edit the `terraform-gcloud/variables.tf` file with your project details.  You need to create a Google Cloud "project" for this demo.
-5. Edit the `config/deploy.yml` file:
+4. Start Docker Desktop, then start the database for local development:
+   ```bash
+   docker compose up db -d
+   ```
+5. Edit the `terraform-gcloud/variables.tf` file with your project details.  You need to create a Google Cloud "project" for this demo.
+6. Edit the `config/deploy.yml` file:
    1. Set the `proxy.host` domain name (currently set to `gcp.kamaltutorial.com`)
    2. Change the `registry.username`
    3. Change the `ssh.user` to your username.
@@ -218,6 +222,15 @@ First, ensure that you can run `terraform` commands to create the infrastructure
 
 ### Kamal v2 Deployment
 Next, deploy the Rails app using Kamal v2. Make sure you've updated `config/deploy.yml` with the new IP and that DNS is pointing to it.
+
+> **Build times by platform:**
+>
+> |  | Fresh build (no cache) | Incremental (Ruby-only changes) |
+> |--|--|--|
+> | **Linux x86_64** | 3-5 minutes | 1-2 minutes |
+> | **Apple Silicon Mac** | 20-30 minutes (QEMU emulation) | 3-5 minutes (cached layers reused) |
+>
+> The Docker image targets `linux/amd64`, so ARM Macs must emulate via QEMU on the first build. Incremental builds are fast on both platforms because Docker layer caching skips unchanged layers (base image, system packages, gems). For production workflows, CI (e.g., GitHub Actions) builds on native amd64 runners, so this is only relevant for local deploys. If the slow first build bothers you, you can optionally use a [remote amd64 builder](docs/remote-builder.md) — your GCP instance already has Docker installed.
 
 1. Run `./bin/kamal setup` for the first deployment. This builds the Docker image, pushes it to Docker Hub, installs kamal-proxy on the server, and starts the app container. The first run will likely fail on the health check because database setup takes time.
 2. Run `./bin/kamal deploy` a second time. Now that the databases exist, the app starts quickly and passes the health check.
