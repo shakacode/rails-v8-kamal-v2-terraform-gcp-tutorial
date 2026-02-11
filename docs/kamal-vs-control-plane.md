@@ -95,7 +95,7 @@ Note: Control Plane pricing scales with actual resource consumption. For a small
 
 2. **Familiar tooling** — If you know Docker and SSH, you know Kamal. The `config/deploy.yml` is straightforward YAML.
 
-3. **Low cost floor** — A single small VM (~$15/mo) runs your entire app. No platform fees or per-request pricing.
+3. **Low-cost floor** — A single small VM (~$15/mo) runs your entire app. No platform fees or per-request pricing.
 
 4. **Full control** — You own the VM. SSH in anytime. Install whatever you need. No platform restrictions.
 
