@@ -20,6 +20,16 @@ for arg in "$@"; do
     --keep-ip)
       KEEP_IP=true
       ;;
+    --help|-h)
+      echo "Usage: tear-down [--keep-ip]"
+      echo ""
+      echo "Stops the Kamal app and destroys all Terraform infrastructure."
+      echo ""
+      echo "Options:"
+      echo "  --keep-ip  Preserve the static IP (~\$0.01/hr while unattached)"
+      echo "             so DNS and deploy.yml stay stable across cycles"
+      exit 0
+      ;;
   esac
 done
 
