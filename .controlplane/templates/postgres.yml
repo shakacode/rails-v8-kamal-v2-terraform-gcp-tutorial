@@ -1,0 +1,111 @@
+# Postgres workload for test/QA apps.
+# Production should use a managed database service (e.g., AWS RDS, GCP Cloud SQL).
+# Based on https://github.com/controlplane-com/examples/blob/main/examples/postgres/manifest.yaml
+
+kind: volumeset
+name: postgres-poc-vs
+description: postgres-poc-vs
+spec:
+  autoscaling:
+    maxCapacity: 1000
+    minFreePercentage: 1
+    scalingFactor: 1.1
+  fileSystemType: ext4
+  initialCapacity: 10
+  performanceClass: general-purpose-ssd
+  snapshots:
+    createFinalSnapshot: true
+    retentionDuration: 7d
+
+---
+kind: secret
+name: postgres-poc-credentials
+description: ''
+type: dictionary
+data:
+  password: the_password
+  username: the_user
+
+---
+kind: secret
+name: postgres-poc-entrypoint-script
+type: opaque
+data:
+  encoding: base64
+  # Simple entrypoint that delegates to the official postgres docker-entrypoint.sh.
+  # For test/QA apps only — production should use a managed database service.
+  payload: >-
+    IyEvdXNyL2Jpbi9lbnYgYmFzaAoKIyBTaW1wbGUgZW50cnlwb2ludCB0aGF0IGRlbGVnYXRlcyB0byB0aGUgb2ZmaWNpYWwgcG9zdGdyZXMgZG9ja2VyLWVudHJ5cG9pbnQuc2guCiMgRm9yIHRlc3QvUUEgYXBwcyBvbmx5IOKAlCBwcm9kdWN0aW9uIHNob3VsZCB1c2UgYSBtYW5hZ2VkIGRhdGFiYXNlIHNlcnZpY2UuCgpzb3VyY2UgL3Vzci9sb2NhbC9iaW4vZG9ja2VyLWVudHJ5cG9pbnQuc2gKCl9tYWluICIkQCIK
+
+---
+kind: identity
+name: postgres-poc-identity
+description: postgres-poc-identity
+
+---
+kind: policy
+name: postgres-poc-access
+description: postgres-poc-access
+bindings:
+  - permissions:
+      - reveal
+    principalLinks:
+      - //gvc/{{APP_NAME}}/identity/postgres-poc-identity
+targetKind: secret
+targetLinks:
+  - //secret/postgres-poc-credentials
+  - //secret/postgres-poc-entrypoint-script
+
+---
+kind: workload
+name: postgres
+description: postgres
+spec:
+  type: stateful
+  containers:
+    - cpu: 1000m
+      memory: 512Mi
+      env:
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pg_data"
+        - name: POSTGRES_PASSWORD
+          value: cpln://secret/postgres-poc-credentials.password
+        - name: POSTGRES_USER
+          value: cpln://secret/postgres-poc-credentials.username
+      name: stateful
+      image: postgres:16
+      command: /bin/bash
+      args:
+        - "-c"
+        - "cat /usr/local/bin/cpln-entrypoint.sh >> ./cpln-entrypoint.sh && chmod u+x ./cpln-entrypoint.sh && ./cpln-entrypoint.sh postgres"
+      ports:
+        - number: 5432
+          protocol: tcp
+      volumes:
+        - uri: cpln://volumeset/postgres-poc-vs
+          path: "/var/lib/postgresql/data"
+        - uri: cpln://secret/postgres-poc-entrypoint-script
+          path: "/usr/local/bin/cpln-entrypoint.sh"
+      inheritEnv: false
+      livenessProbe:
+        tcpSocket:
+          port: 5432
+        failureThreshold: 3
+      readinessProbe:
+        tcpSocket:
+          port: 5432
+        failureThreshold: 3
+  identityLink: //identity/postgres-poc-identity
+  defaultOptions:
+    capacityAI: false
+    autoscaling:
+      metric: cpu
+      target: 95
+      maxScale: 1
+  firewallConfig:
+    external:
+      inboundAllowCIDR: []
+      outboundAllowCIDR:
+        - 0.0.0.0/0
+    internal:
+      inboundAllowType: same-gvc
