@@ -50,6 +50,7 @@ class DeploymentManager
 
   def apply_terraform
     log_step "Applying Terraform Infrastructure"
+    execute_command_in_dir("terraform init", @terraform_dir, "❌ Terraform init failed!")
     import_static_ip_if_exists
     execute_command_in_dir("terraform apply -auto-approve", @terraform_dir, "❌ Terraform apply failed!")
   end
