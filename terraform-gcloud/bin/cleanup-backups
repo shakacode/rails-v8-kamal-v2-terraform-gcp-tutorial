@@ -1,4 +1,11 @@
 #!/bin/bash
-# cleanup-backups.sh
+
+if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+  echo "Usage: cleanup-backups"
+  echo ""
+  echo "Removes old Terraform state backup files from terraform-state/."
+  exit 0
+fi
+
 find ../terraform-state -name "terraform.tfstate.*.backup" -type f -delete
 echo "Old backup files removed from terraform-state."
