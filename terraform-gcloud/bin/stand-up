@@ -10,6 +10,6 @@ if ARGV.include?("--help") || ARGV.include?("-h")
   exit 0
 end
 
-require_relative '../../lib/deployment_manager'
+require_relative '../../lib/kamal_deployment_manager'
 
-DeploymentManager.new.deploy
+KamalDeploymentManager.new.deploy
