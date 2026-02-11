@@ -155,7 +155,7 @@ The `terraform-gcloud/bin/` directory contains helper scripts for managing infra
 | `tear-down` | Bash | Graceful teardown: kamal app stop, then terraform destroy (use `--keep-ip` to preserve the static IP across cycles) |
 | `cleanup-backups` | Bash | Remove old Terraform state backup files |
 
-The `stand-up` script uses the `DeploymentManager` class in `lib/deployment_manager.rb`, which orchestrates the full deployment flow and provides colored output with timing for each step.
+The `stand-up` script uses the `KamalDeploymentManager` class in `lib/kamal_deployment_manager.rb`, which orchestrates the full deployment flow and provides colored output with timing for each step.
 
 ## Automated Deployment
 Run `terraform-gcloud/bin/stand-up` to create the infrastructure on Google Cloud and deploy the Rails app using Kamal v2.
@@ -267,7 +267,7 @@ After deploying, verify the app is working correctly:
 ```
 
 Then verify in the browser:
-1. Visit `https://your-domain.com` — confirm the app loads with SSL (padlock icon)
+1. Visit `https://your-domain.com` — confirm the app loads with SSL (padlock icon). **Note:** If Chrome shows `ERR_CERTIFICATE_TRANSPARENCY_REQUIRED`, wait 5-10 minutes — the Let's Encrypt certificate was just issued and CT logs need time to propagate. Try an incognito window first. See [SSL Certificate Error After Deploy](#ssl-certificate-error-after-deploy).
 2. Create, edit, and delete a Post — confirm CRUD works end-to-end
 3. Check the footer — should show `rev <sha> · deployed X ago` (production only)
 4. Check the browser console — no JavaScript errors
@@ -308,6 +308,9 @@ First, it's important to understand the execution context of when running comman
    * `docker ps` to see the running containers.
    * `docker logs CONTAINER_ID` to see the logs of a container.
    * `docker exec -it CONTAINER_ID bash` to get a shell in a container.
+
+### SSL Certificate Error After Deploy
+If Chrome shows `ERR_CERTIFICATE_TRANSPARENCY_REQUIRED` right after `stand-up` or `kamal setup`, **wait 5-10 minutes and retry**. kamal-proxy auto-provisions a Let's Encrypt certificate, but Chrome requires Certificate Transparency log propagation which can take a few minutes. Try an incognito window first — Chrome caches SSL state aggressively. See [docs/troubleshooting.md](docs/troubleshooting.md#ssl-certificate-issues) for detailed debugging steps.
 
 ### Stale DNS Cache
 If your domain still resolves to the old IP after updating the DNS A record, your local machine is likely serving a cached result. The `stand-up` script flushes the local DNS cache automatically when the IP changes, but if you need to do it manually:
