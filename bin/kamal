@@ -24,9 +24,9 @@ end
 require "rubygems"
 require "bundler/setup"
 
-require_relative '../lib/deployment_manager'
+require_relative '../lib/kamal_deployment_manager'
 
-unless DeploymentManager.new.deployed_ip_matches_configured_ip?
+unless KamalDeploymentManager.new.deployed_ip_matches_configured_ip?
   abort("Rerun './terraform-gcloud/bin/stand-up' to fix this or change the host IP directly in 'config/deploy.yml'")
 end
 
