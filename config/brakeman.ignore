@@ -1,0 +1,14 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "796f03d378cb3982a89025a12da8aef924af4c1cd364fb43645e714a4e8c59bf",
+      "note": "Open3.capture2 with array form is safe from shell injection — all arguments are passed directly to exec"
+    },
+    {
+      "fingerprint": "5dba24875f005a08aba713f14807d5478b0980a59a4ebba53f9e12071e7196c2",
+      "note": "Open3.capture2 with array form is safe from shell injection — all arguments are passed directly to exec"
+    }
+  ],
+  "updated": "2026-02-15",
+  "brakeman_version": "8.0.2"
+}

@@ -189,7 +189,7 @@ class KamalDeploymentManager
   end
 
   def resolve_dns(server: "8.8.8.8")
-    args = ["dig", "+short", @host]
+    args = [ "dig", "+short", @host ]
     args << "@#{server}" if server
     output, = Open3.capture2(*args)
     output.lines.find { |line| line.match?(/^\d{1,3}(\.\d{1,3}){3}$/) }&.strip
