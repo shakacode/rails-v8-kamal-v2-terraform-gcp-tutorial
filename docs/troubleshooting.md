@@ -259,6 +259,66 @@ docker exec kamal-proxy kamal-proxy deploy rails_kamal_demo-web \
   --tls
 ```
 
+## SSL Certificate Issues
+
+### ERR_CERTIFICATE_TRANSPARENCY_REQUIRED
+
+#### Symptoms
+
+Chrome shows "Your connection is not private" with error code `NET::ERR_CERTIFICATE_TRANSPARENCY_REQUIRED` immediately after a fresh deployment.
+
+Other browsers (Firefox, Safari) may load the site fine.
+
+#### Cause
+
+This is a **timing issue**, not a certificate problem. When kamal-proxy provisions a new Let's Encrypt certificate during `kamal setup`, Chrome may reject it because the Certificate Transparency (CT) log entries haven't fully propagated yet. Let's Encrypt embeds CT timestamps in every certificate, but Chrome validates these against public CT logs — and propagation can take up to an hour.
+
+This only happens on **fresh deployments** — when kamal-proxy provisions a new certificate during `kamal setup` (first deploy or after a `tear-down`/`stand-up` cycle). Subsequent `kamal deploy` commands reuse the existing certificate, so this error won't recur.
+
+#### Fix
+
+**Step 1: Wait 5-10 minutes and try again.** This resolves the issue in most cases. CT logs typically propagate within minutes, rarely up to an hour.
+
+**Step 2: Try an incognito/private window** (or a different browser). Chrome caches SSL state aggressively — an incognito window starts fresh and may already see the propagated CT logs.
+
+**Step 3: Check your system clock.** Chrome validates CT timestamps against your local clock. If your system time is off by more than a few minutes, CT validation can fail:
+
+```bash
+# macOS — force-sync system clock with time server
+sudo sntp -sS time.apple.com
+```
+
+**Step 4: Inspect the certificate** to confirm Let's Encrypt issued it correctly:
+
+```bash
+# From your local machine
+echo | openssl s_client -connect gcp.kamaltutorial.com:443 -servername gcp.kamaltutorial.com 2>/dev/null | openssl x509 -noout -issuer -dates
+```
+
+You should see `issuer` containing "Let's Encrypt" and valid date ranges. If not, kamal-proxy may not have completed certificate provisioning.
+
+**Step 5: Verify the certificate appears in CT logs** by visiting `https://crt.sh/?q=your-domain.com` in a browser. If your certificate doesn't appear yet, CT propagation is still in progress — wait and retry.
+
+**Step 6: Force certificate reissuance** (last resort). If the certificate still isn't working after an hour:
+
+```bash
+# SSH into the server and restart kamal-proxy
+ssh your-username@YOUR_INSTANCE_IP
+docker restart kamal-proxy
+```
+
+Wait 30-60 seconds for kamal-proxy to request a new certificate, then test again.
+
+### ERR_SSL_VERSION_OR_CIPHER_MISMATCH
+
+If you see this error instead of the CT error, it usually means kamal-proxy hasn't finished obtaining the certificate yet. Wait 30-60 seconds and refresh.
+
+### Cloudflare Users: SSL Mode Matters
+
+If you're using Cloudflare for DNS with the proxy enabled (orange cloud icon), you may see certificate errors because Cloudflare terminates TLS and re-encrypts to your origin. Set Cloudflare's SSL/TLS mode to **Full (strict)** so it trusts Let's Encrypt certificates from kamal-proxy.
+
+Alternatively, set the DNS record to **DNS only** (grey cloud icon) to let kamal-proxy handle TLS directly, bypassing Cloudflare's proxy entirely.
+
 ## Cloud SQL Proxy Issues
 
 ### Symptoms

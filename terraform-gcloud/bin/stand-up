@@ -1,4 +1,15 @@
 #!/usr/bin/env ruby
-require_relative '../../lib/deployment_manager'
+if ARGV.include?("--help") || ARGV.include?("-h")
+  puts "Usage: stand-up"
+  puts ""
+  puts "Runs terraform init/apply, updates deploy.yml with the server IP,"
+  puts "verifies DNS, and deploys the Rails app with Kamal."
+  puts ""
+  puts "If a static IP was preserved by a previous 'tear-down --keep-ip',"
+  puts "it will be re-imported automatically."
+  exit 0
+end
 
-DeploymentManager.new.deploy
+require_relative '../../lib/kamal_deployment_manager'
+
+KamalDeploymentManager.new.deploy
