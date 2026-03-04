@@ -33,6 +33,13 @@ Docs are nice. But lots are not in the docs. That's OK for 2 reasons:
 5. **Rails 8**: Rails 8 is the latest version of the popular Ruby on Rails framework. It comes with many new features and improvements that make it easier to build web applications.
 6. **Google Cloud**: Google Cloud is a powerful cloud platform that offers a wide range of services for building and deploying applications. By using Google Cloud, you can take advantage of its scalability, reliability, and security features.
 
+## Control Plane Deployment (Alternative)
+
+This repo also includes a fully configured [Control Plane](https://controlplane.com) deployment path using the [`cpflow` gem](https://github.com/shakacode/control-plane-flow). This gives you a Heroku-like experience with auto-scaling, multi-cloud support, and no VM management.
+
+- **Setup guide**: [.controlplane/readme.md](.controlplane/readme.md)
+- **Comparison**: [Kamal vs Control Plane](docs/kamal-vs-control-plane.md) — a detailed side-by-side analysis
+
 ## Requirements
 
 1. [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) with a gcloud account.

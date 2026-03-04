@@ -1,0 +1,60 @@
+# Configuration for `cpflow` commands.
+# See https://github.com/shakacode/control-plane-flow for documentation.
+
+# Keys beginning with "cpln_" correspond to your settings in Control Plane.
+
+# You can opt out of allowing the use of CPLN_ORG and CPLN_APP env vars
+# to avoid any accidents with the wrong org / app.
+allow_org_override_by_env: true
+allow_app_override_by_env: true
+
+aliases:
+  common: &common
+    # Change this value to your org name,
+    # or set CPLN_ORG env var (overrides this value for all cpflow commands).
+    cpln_org: shakacode-open-source-examples-staging
+
+    # Control Plane deployment location.
+    default_location: aws-us-east-2
+
+    # Workload used as a template for one-off scripts (like `heroku run`).
+    one_off_workload: rails
+
+    # Workloads that are deployed when the application image updates.
+    app_workloads:
+      - rails
+
+    # Additional workloads not affected by deploy-image.
+    additional_workloads:
+      - postgres
+
+    # Workload used when maintenance mode is on.
+    maintenance_workload: maintenance
+
+    # Script to run during release phase (deploy-image or promote-app-from-upstream).
+    release_script: release_script.sh
+
+apps:
+  rails-kamal-demo-production:
+    <<: *common
+    # Don't allow overriding org/app by env vars for production safety.
+    allow_org_override_by_env: false
+    allow_app_override_by_env: false
+    cpln_org: shakacode-open-source-examples-production
+    upstream: rails-kamal-demo-staging
+
+  rails-kamal-demo-staging:
+    <<: *common
+
+  # QA/review apps — create with:
+  #   cpflow setup-app -a qa-rails-kamal-demo-pr-1234
+  qa-rails-kamal-demo:
+    <<: *common
+    # Order matters for setup!
+    setup_app_templates:
+      - app
+      - postgres
+      - rails
+    match_if_app_name_starts_with: true
+    image_retention_days: 5
+    stale_app_image_deployed_days: 5
