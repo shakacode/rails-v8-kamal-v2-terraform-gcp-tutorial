@@ -152,10 +152,10 @@ The `terraform-gcloud/bin/` directory contains helper scripts for managing infra
 | Script | Language | Purpose |
 |--------|----------|---------|
 | `stand-up` | Ruby | Full automated deployment: terraform apply, update deploy.yml IP, DNS verification, kamal setup |
-| `tear-down` | Bash | Graceful teardown: kamal app stop, then terraform destroy |
+| `tear-down` | Bash | Graceful teardown: kamal app stop, then terraform destroy (use `--keep-ip` to preserve the static IP across cycles) |
 | `cleanup-backups` | Bash | Remove old Terraform state backup files |
 
-The `stand-up` script uses the `DeploymentManager` class in `lib/deployment_manager.rb`, which orchestrates the full deployment flow and provides colored output with timing for each step.
+The `stand-up` script uses the `KamalDeploymentManager` class in `lib/kamal_deployment_manager.rb`, which orchestrates the full deployment flow and provides colored output with timing for each step.
 
 ## Automated Deployment
 Run `terraform-gcloud/bin/stand-up` to create the infrastructure on Google Cloud and deploy the Rails app using Kamal v2.
@@ -193,7 +193,13 @@ When you're done, run `terraform-gcloud/bin/tear-down` to destroy the infrastruc
 
 The `tear-down` script:
 1. Runs `kamal app stop` to stop the Rails app. This is required before destroying infrastructure — Terraform cannot destroy the Cloud SQL database while active connections exist.
-2. Runs `terraform destroy` to remove all GCP resources (Compute Engine, Cloud SQL, firewall rules, service accounts).
+2. Runs `terraform destroy` to remove all GCP resources (Compute Engine, Cloud SQL, static IP, firewall rules, service accounts).
+
+**Keeping the static IP:** If you plan to re-run `stand-up` soon, you can preserve the static IP so your DNS and `deploy.yml` stay stable — no DNS update needed on the next cycle. The reserved IP costs ~$0.01/hr (~$7/mo) while not attached to a running VM:
+
+```bash
+terraform-gcloud/bin/tear-down --keep-ip
+```
 
 ## Step by Step
 To get a sense of the basics of Terraform and Kamal v2, follow these steps manually instead of using the automated scripts. This helps you understand what each command does and see the output from each step.
@@ -261,7 +267,7 @@ After deploying, verify the app is working correctly:
 ```
 
 Then verify in the browser:
-1. Visit `https://your-domain.com` — confirm the app loads with SSL (padlock icon)
+1. Visit `https://your-domain.com` — confirm the app loads with SSL (padlock icon). **Note:** If Chrome shows `ERR_CERTIFICATE_TRANSPARENCY_REQUIRED`, wait 5-10 minutes — the Let's Encrypt certificate was just issued and CT logs need time to propagate. Try an incognito window first. See [SSL Certificate Error After Deploy](#ssl-certificate-error-after-deploy).
 2. Create, edit, and delete a Post — confirm CRUD works end-to-end
 3. Check the footer — should show `rev <sha> · deployed X ago` (production only)
 4. Check the browser console — no JavaScript errors
@@ -302,6 +308,24 @@ First, it's important to understand the execution context of when running comman
    * `docker ps` to see the running containers.
    * `docker logs CONTAINER_ID` to see the logs of a container.
    * `docker exec -it CONTAINER_ID bash` to get a shell in a container.
+
+### SSL Certificate Error After Deploy
+If Chrome shows `ERR_CERTIFICATE_TRANSPARENCY_REQUIRED` right after `stand-up` or `kamal setup`, **wait 5-10 minutes and retry**. kamal-proxy auto-provisions a Let's Encrypt certificate, but Chrome requires Certificate Transparency log propagation which can take a few minutes. Try an incognito window first — Chrome caches SSL state aggressively. See [docs/troubleshooting.md](docs/troubleshooting.md#ssl-certificate-issues) for detailed debugging steps.
+
+### Stale DNS Cache
+If your domain still resolves to the old IP after updating the DNS A record, your local machine is likely serving a cached result. The `stand-up` script flushes the local DNS cache automatically when the IP changes, but if you need to do it manually:
+
+**macOS:**
+```bash
+sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder
+```
+
+**Linux (systemd):**
+```bash
+sudo systemd-resolve --flush-caches
+```
+
+Then verify with `dig +short your-domain.com` (dig bypasses the OS cache, so also try `ping your-domain.com` to confirm the OS itself sees the new IP).
 
 ### Troubleshooting Steps
 1. First, read the console messages very carefully and look for the first error message. This is often the most important clue. If there's a health check timeout, it might be due to the failure to run migrations quickly enough, and then you simply need to run `./bin/kamal deploy` again.
